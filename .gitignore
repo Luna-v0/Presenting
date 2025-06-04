@@ -4,6 +4,8 @@
 node_modules/
 # Python virtual environment
 .venv/
+videos/
+output/
 
 ## __pycache__ directories
 __pycache__/
