@@ -1,5 +1,0 @@
-# This file is used internally by FFMPEG.
-file 'file:/mnt/hdd1/Repos/Presenting/manim-videos/media/videos/main/1080p60/partial_movie_files/TexToPly/3797569615_1303003577_1093185712.mp4'
-file 'file:/mnt/hdd1/Repos/Presenting/manim-videos/media/videos/main/1080p60/partial_movie_files/TexToPly/3988158414_2341082278_1954453744.mp4'
-file 'file:/mnt/hdd1/Repos/Presenting/manim-videos/media/videos/main/1080p60/partial_movie_files/TexToPly/3988158414_945382908_4289599784.mp4'
-file 'file:/mnt/hdd1/Repos/Presenting/manim-videos/media/videos/main/1080p60/partial_movie_files/TexToPly/3988158414_4166842112_1161023526.mp4'
