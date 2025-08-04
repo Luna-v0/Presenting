@@ -1,31 +1,84 @@
-from manim import DOWN, ORIGIN, UP, Code, MathTex, ReplacementTransform, Scene
+from manim import (
+    BLUE,
+    DOWN,
+    RED,
+    UP,
+    WHITE,
+    YELLOW,
+    Circle,
+    Create,
+    Graph,
+    Scene,
+    Text,
+    Transform,
+)
+
+radius = 0.7
 
 
-class TexToPly(Scene):
+class ASTScene(Scene):
     def construct(self):
-        self.camera.background_color = "#ffffff"  # Set background color to white
-        # 1. Create the LaTeX Mobject
-        # You can use any LaTeX string here
-        latex_string = r"S \longrightarrow digit + S \\ S \longrightarrow digit"
-        latex_mobject = MathTex(latex_string, font_size=60, color="#000000")
+        # Define the graph nodes and edges (tree structure)
+        nodes = ["E0", "E1", "T1", "plus", "T2"]
+        edges = [("E0", "E1"), ("E0", "plus"), ("E0", "T2"), ("E1", "T1")]
 
-        code_mobject = Code(
-            "src-examples/test.py",
-            background="rectangle",
-            formatter_style="pastie",  # Light syntax highlighting style
-            background_config={"stroke_color": "#000000", "fill_color": "#ffffff"},
-            add_line_numbers=False,
-            tab_width=4,
-            paragraph_config={"font": "Monospace", "color": "#000000"},
+        labels = {"E0": "E", "E1": "E", "T1": "int(1)", "plus": "+", "T2": "int(2)"}
+
+        g = Graph(
+            vertices=nodes,
+            edges=edges,
+            labels=labels,
+            layout="tree",
+            root_vertex="E0",
+            vertex_config={
+                "fill_color": BLUE,
+                "E0": {"radius": radius},
+                "E1": {"radius": radius},
+                "T1": {"radius": radius},
+                "plus": {"radius": radius},
+                "T2": {"radius": radius},
+            },
         )
-        self.play(latex_mobject.animate.move_to(ORIGIN))
-        self.wait(0.5)
 
-        # Ensure the code object is also ready at the transformation target
-        code_mobject.move_to(ORIGIN)
+        steps = [
+            (0, "T1"),  # '1' → T1
+            (0, "E1"),  # reduce T → E
+            (1, "plus"),  # '+' → plus
+            (2, "T2"),  # '2' → T2
+            (2, "E0"),  # reduce E + T → E
+        ]
 
-        self.play(ReplacementTransform(latex_mobject, code_mobject))
-        self.wait(3)
+        tokens = ["1", "+", "2"]
+        input_text = Text(" ".join(tokens), font_size=36)
+        input_text.to_edge(UP)
+
+        self.play(Create(g))
+        self.wait(1)
+        for i, node_id in steps:
+            # Highlight input token
+            # Build colored string dynamically
+            t2c = {
+                tok: (YELLOW if idx == i else WHITE) for idx, tok in enumerate(tokens)
+            }
+            highlighted_input = Text(" ".join(tokens), font_size=36, t2c=t2c).move_to(
+                input_text
+            )
+            self.play(Transform(input_text, highlighted_input))
+
+            vertex_group = g.vertex_mobjects[node_id]
+            circle = vertex_group[0]  # assuming Circle is first
+            label = vertex_group[1]  # assuming Text is second
+
+            # Highlight both properly
+            self.play(
+                circle.animate.set_fill(RED),  # Circle gets red
+                label.animate.set_color(WHITE),  # Force text to stay visible
+            )
+
+            # Highlight graph node
+            self.wait(0.3)
+
+        self.wait()
 
 
 # To run this, save it as a .py file (e.g., morph_animation.py)
