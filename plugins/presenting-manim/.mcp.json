@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "presenting-manim": {
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        ".",
+        "python",
+        "server.py"
+      ],
+      "env": {
+        "UV_LINK_MODE": "copy"
+      }
+    }
+  }
+}

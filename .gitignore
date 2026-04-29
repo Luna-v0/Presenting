@@ -6,7 +6,10 @@ node_modules/
 .venv/
 videos/
 output/
+manim-videos/media/
+manim-videos/slides/
+manim-videos/*.html
+beamer_demo_assets/
 
 ## __pycache__ directories
 __pycache__/
-

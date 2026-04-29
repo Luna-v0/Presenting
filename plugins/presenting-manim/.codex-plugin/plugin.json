@@ -1,0 +1,29 @@
+{
+  "name": "presenting-manim",
+  "version": "0.1.0",
+  "description": "Repo-local Manim MCP server and skills for presentation work.",
+  "author": {
+    "name": "lunav0"
+  },
+  "license": "UNLICENSED",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Presenting Manim",
+    "shortDescription": "Render and iterate on Manim scenes inside this repo",
+    "longDescription": "Provides a repo-local Manim MCP server backed by uv plus skills for creating, rendering, and iterating on presentation scenes while keeping old Motion Canvas work archived.",
+    "developerName": "lunav0",
+    "category": "Coding",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "List the Manim scenes in this repo and render a draft",
+      "Create a new scene in manim-videos/scenes and preview it",
+      "Debug a failing Manim scene with low-quality renders first"
+    ],
+    "brandColor": "#1F6FEB"
+  }
+}
