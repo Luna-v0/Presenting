@@ -121,21 +121,9 @@ class ImageSlide(BeamerSlide):
         if target_scene is None:
             target_scene = self
 
-        title = self.title_text.copy()
-        subtitle = self.subtitle_text.copy()
-        target_scene.play(Write(title), Write(subtitle))
-        target_scene.next_slide()
-
-        img = asset_image(self.image_name, max_width=8.5, max_height=3.8)
-        img.next_to(subtitle, DOWN, buff=0.8)
-        img.shift(DOWN * 0.3)
+        img = asset_image(self.image_name, max_width=12.0, max_height=6.5)
+        img.move_to(ORIGIN)
         target_scene.play(FadeIn(img))
-
-        if self.caption_str is not None:
-            cap = text(self.caption_str, font_size=26)
-            cap.next_to(img, DOWN, buff=0.35)
-            target_scene.play(Write(cap))
-
         target_scene.wait(0.5)
         target_scene.next_slide()
 
@@ -541,11 +529,13 @@ def _scene08_outro():
     """If you want to play with all that — libraries, harness, thesis ideas."""
     section = SlideWithBlocks(
         title="If you want to play with all that",
+        subtitle="Some libs and tools",
         blocks=[],
     )
 
     libraries = SlideWithBlocks(
         title="Interesting libraries",
+        subtitle="",
         blocks=[
             ExampleBlock(
                 title="The usual suspects",
@@ -563,6 +553,7 @@ def _scene08_outro():
 
     harness = SlideWithBlocks(
         title="Harness",
+        subtitle="",
         blocks=[
             RemarkBlock(
                 title="Hermes agents",
@@ -573,6 +564,7 @@ def _scene08_outro():
 
     thesis_ideas = SlideWithList(
         title="Some thesis ideas",
+        subtitle="",
         beamer_list=ItemizedList(
             items=[
                 "Fine-tune DeepRacer via the new Gym interface (no real-world test).",
