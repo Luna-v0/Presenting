@@ -4,6 +4,7 @@ Formula morphs + numeric example + Elo ranked list.
 """
 
 from manim import *
+from manim_slides import Slide
 import numpy as np
 
 
@@ -20,7 +21,7 @@ MODEL_B_C = "#C62828"
 ELO_C     = "#6A1B9A"   # purple — Elo
 
 
-class BradleyTerryToElo(Scene):
+class BradleyTerryToElo(Slide):
     def construct(self):
         self.camera.background_color = BG
         self.scene_bt_formula()
@@ -47,6 +48,7 @@ class BradleyTerryToElo(Scene):
         softmax[6].set_color(SOFT_C)
         self.play(Write(softmax))
         self.wait(1.5)
+        self.next_slide()
 
         # Morph softmax → BT with reward sums
         bt = MathTex(
@@ -67,12 +69,14 @@ class BradleyTerryToElo(Scene):
             run_time=2.5,
         )
         self.wait(1.5)
+        self.next_slide()
 
         # Reparametrize p_i = e^{s_i}
         sub = MathTex(r"p_i = e^{s_i}", font_size=26, color=NEUTRAL_C)
         sub.next_to(bt, DOWN, buff=0.6)
         self.play(FadeIn(sub, shift=UP * 0.15))
         self.wait(0.8)
+        self.next_slide()
         self._clear()
 
     # ─────────────────────────────────────────────────────────────────
@@ -96,6 +100,7 @@ class BradleyTerryToElo(Scene):
         )
         self.play(FadeIn(model_a), FadeIn(model_b), FadeIn(vs), FadeIn(scores))
         self.wait(0.5)
+        self.next_slide()
 
         s_a, s_b = 2.0, 1.0
         exp_a, exp_b = np.exp(s_a), np.exp(s_b)
@@ -123,6 +128,7 @@ class BradleyTerryToElo(Scene):
         for c in comp:
             self.play(Write(c), run_time=0.7)
             self.wait(0.4)
+            self.next_slide()
         self.wait(2)
         self._clear()
 
@@ -167,6 +173,7 @@ class BradleyTerryToElo(Scene):
 
         self.play(FadeIn(bt_ref), FadeIn(prop, shift=LEFT * 0.15))
         self.wait(1.5)
+        self.next_slide()
 
         # Chess leaderboard
         players_data = [
@@ -201,6 +208,7 @@ class BradleyTerryToElo(Scene):
         for row in rows:
             self.play(FadeIn(row, shift=RIGHT * 0.2), run_time=0.45)
         self.wait(3)
+        self.next_slide()
 
     # ─────────────────────────────────────────────────────────────────
     # Helpers

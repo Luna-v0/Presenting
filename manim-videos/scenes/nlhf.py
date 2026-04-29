@@ -10,6 +10,7 @@ Flow:
 """
 
 from manim import *
+from manim_slides import Slide
 
 
 # ── Palette (white background) ───────────────────────────────────────
@@ -22,7 +23,7 @@ PREF_C    = "#1565C0"   # blue — preference probability
 KL_C      = "#00695C"   # teal — KL penalty
 
 
-class NLHF(Scene):
+class NLHF(Slide):
     def construct(self):
         self.camera.background_color = BG
         self.scene_nlhf()
@@ -46,6 +47,7 @@ class NLHF(Scene):
                                      buff=0.06, stroke_width=2.5)
         self.play(Create(box_a))
         self.wait(4.0)
+        self.next_slide()
 
         # ── 2. Standard advantage (same orange), baseline b purple ───
         std = MathTex(
@@ -63,6 +65,7 @@ class NLHF(Scene):
                                      buff=0.06, stroke_width=2.5)
         self.play(Create(box_b))
         self.wait(4.0)
+        self.next_slide()
 
         # ── 3. NLHF advantage ───────────────────────────────────────
         nlhf = MathTex(
@@ -78,6 +81,7 @@ class NLHF(Scene):
 
         self.play(FadeOut(box_b), Write(nlhf))
         self.wait(4.0)
+        self.next_slide()
 
         # ── 4. Connect  b(S_t)  ↔  1/2 ──────────────────────────────
         box_b2   = SurroundingRectangle(std[3],  color=BASE_C,
@@ -89,6 +93,7 @@ class NLHF(Scene):
 
         self.play(Create(box_b2), Create(box_half), GrowArrow(link))
         self.wait(4.0)
+        self.next_slide()
 
         # ── 5. Merge into unified policy gradient ────────────────────
         self.play(
@@ -118,3 +123,5 @@ class NLHF(Scene):
             TransformMatchingTex(pg, unified, transform_mismatches=True),
             run_time=2.8,
         )
+        self.wait(1.5)
+        self.next_slide()

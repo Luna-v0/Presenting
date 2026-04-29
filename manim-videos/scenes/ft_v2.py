@@ -15,10 +15,10 @@ the screenplay. Until they exist, a labeled placeholder is shown.
 Render & present:
     uv run manim-slides render scenes/ft_v2.py FtV2_01_Recap FtV2_BTAnim FtV2_02_RecapAfter \\
         FtV2_03_Continuing FtV2_04_FeedbackNoHumans FtV2_05_WhyBT FtV2_06_NLHFIntro \\
-        FtV2_NLHFAnim FtV2_07_NoMoreBT FtV2_08_Outro -ql
+        FtV2_NLHFAnim FtV2_NLHFResults FtV2_07_NoMoreBT FtV2_08_Outro -ql
     uv run manim-slides present FtV2_01_Recap FtV2_BTAnim FtV2_02_RecapAfter \\
         FtV2_03_Continuing FtV2_04_FeedbackNoHumans FtV2_05_WhyBT FtV2_06_NLHFIntro \\
-        FtV2_NLHFAnim FtV2_07_NoMoreBT FtV2_08_Outro
+        FtV2_NLHFAnim FtV2_NLHFResults FtV2_07_NoMoreBT FtV2_08_Outro
 """
 
 from pathlib import Path
@@ -126,8 +126,9 @@ class ImageSlide(BeamerSlide):
         target_scene.play(Write(title), Write(subtitle))
         target_scene.next_slide()
 
-        img = asset_image(self.image_name, max_width=9.0, max_height=4.2)
-        img.next_to(subtitle, DOWN, buff=0.5)
+        img = asset_image(self.image_name, max_width=8.5, max_height=3.8)
+        img.next_to(subtitle, DOWN, buff=0.8)
+        img.shift(DOWN * 0.3)
         target_scene.play(FadeIn(img))
 
         if self.caption_str is not None:
@@ -232,16 +233,15 @@ class PPOFamilySlide(BeamerSlide):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Slide-compatible wrappers around the existing animation Scenes.
-# Multiple inheritance: MRO finds construct() on the existing Scene subclass,
-# while play/wait/next_slide come from manim-slides' Slide mixin.
+# Aliases for the existing animation Slides — give them deck-flow names
+# matching the screenplay order (the originals already inherit from Slide).
 # ─────────────────────────────────────────────────────────────────────────────
 
-class FtV2_BTAnim(Slide, BradleyTerryToElo):
+class FtV2_BTAnim(BradleyTerryToElo):
     """Bradley-Terry → Softmax → Elo (recap animation, part 1 deck)."""
 
 
-class FtV2_NLHFAnim(Slide, NLHF):
+class FtV2_NLHFAnim(NLHF):
     """Natural Language Human Feedback policy-gradient animation."""
 
 
@@ -358,24 +358,11 @@ def _scene04_feedback_no_humans():
 
     rlvr_math = SlideWithBlocks(
         title="RL from Verifiable Reward (RLVR)",
-        subtitle="Original GRPO paper — math reasoning task",
+        subtitle="GRPO paper — math reasoning",
         blocks=[
-            ExampleBlock(
-                title="Math reward (sketch)",
-                content=math(
-                    r"R(y \mid x) \;=\; \mathbb{1}\!\left[\,\text{answer}(y) = \text{ground-truth}(x)\,\right]",
-                    font_size=34,
-                ),
-            ),
             RemarkBlock(
-                title="What this buys you",
-                content=ItemizedList(
-                    items=[
-                        "Rewards are cheap, deterministic, abundant.",
-                        "Quality only depends on the verifier, not on raters.",
-                        "The paper does more — we focus on this reward.",
-                    ],
-                ),
+                title="The reward",
+                content="Just compare the model's response to the math result — match → reward, mismatch → no reward.",
             ),
         ],
     )
@@ -447,16 +434,16 @@ def _scene05_why_bt():
         subtitle="A feature, not a bug",
         blocks=[
             ExampleBlock(
-                title="BT allows the rock-paper-scissors loop",
+                title="The rock paper scissors",
                 content=math(
-                    r"P(A \succ B),\; P(B \succ C),\; P(C \succ A) \;\;\text{can all be} > \tfrac{1}{2}",
+                    r"P(Rock \succ Paper),\; P(Paper \succ Scissors),\; P(Scissors \succ Rock) \;\;\text{can all be} > \tfrac{1}{2}",
                     font_size=32,
                 ),
             ),
             AlertBlock(
-                title="Elo cannot",
+                title="BT and Elo cannot",
                 content=math(
-                    r"r(A) > r(B) > r(C) > r(A) \;\;\Rightarrow\;\; \text{contradiction}",
+                    r"r(Rock) > r(Paper) > r(Scissors) > r(Rock) \;\;\Rightarrow\;\; \text{contradiction}",
                     font_size=32,
                 ),
             ),
@@ -469,7 +456,7 @@ def _scene05_why_bt():
         blocks=[
             ExampleBlock(
                 title="Intuition",
-                content="If A appears more often than C in the preference data, BT inflates A's reward over C — independent of intrinsic quality.",
+                content="If Rock appears more often than Scissors in the preference data, BT inflates Rock's reward over Scissors — no matter what.",
             ),
             RemarkBlock(
                 title="Where it bites",
@@ -503,7 +490,7 @@ def _scene06_nlhf_intro():
                 content=ItemizedList(
                     items=[
                         "Train a binary classifier: given two answers, which one wins?",
-                        "Treat it as a two-player game between the human and the model.",
+                        "Treat it as a two-player game.",
                         "Solve for a Nash equilibrium of that game.",
                     ],
                 ),
@@ -515,19 +502,17 @@ def _scene06_nlhf_intro():
         ],
     )
 
-    nlhf_lead_in = SlideWithList(
-        title="NLHF policy gradient",
-        subtitle="Watch the advantage transform",
-        beamer_list=ItemizedList(
-            items=[
-                "Standard PG advantage: discounted returns minus a baseline.",
-                "NLHF advantage: preference probability minus 1/2, plus a KL penalty.",
-                "Connect b ↔ 1/2, substitute, recover a unified PG formula.",
-            ],
-        ),
-    )
+    return [section, nlhf_idea]
 
-    return [section, nlhf_idea, nlhf_lead_in]
+
+def _scene06b_nlhf_results():
+    """Post-animation result image for NLHF."""
+    results = ImageSlide(
+        title="NLHF — empirical results",
+        subtitle="What the policy gradient buys you",
+        image_name="results_nlhf.png",
+    )
+    return [results]
 
 
 def _scene07_no_more_bt():
@@ -546,16 +531,6 @@ def _scene07_no_more_bt():
                 title="When BT shines",
                 content="For well-behaved problems (the kind RLVR can also solve), BT works perfectly and is cheap.",
             ),
-            RemarkBlock(
-                title="Mental model",
-                content=ItemizedList(
-                    items=[
-                        "BT — fast, scalable, biased to data.",
-                        "NLHF — robust to intransitivity, more expensive.",
-                        "Pick by problem structure, not by hype.",
-                    ],
-                ),
-            ),
         ],
     )
 
@@ -566,13 +541,11 @@ def _scene08_outro():
     """If you want to play with all that — libraries, harness, thesis ideas."""
     section = SlideWithBlocks(
         title="If you want to play with all that",
-        subtitle="Tools, harnesses, and thesis ideas",
         blocks=[],
     )
 
     libraries = SlideWithBlocks(
         title="Interesting libraries",
-        subtitle="Where to start hacking",
         blocks=[
             ExampleBlock(
                 title="The usual suspects",
@@ -590,7 +563,6 @@ def _scene08_outro():
 
     harness = SlideWithBlocks(
         title="Harness",
-        subtitle="Online RL agents you can use today",
         blocks=[
             RemarkBlock(
                 title="Hermes agents",
@@ -601,7 +573,6 @@ def _scene08_outro():
 
     thesis_ideas = SlideWithList(
         title="Some thesis ideas",
-        subtitle="Pick one and run",
         beamer_list=ItemizedList(
             items=[
                 "Fine-tune DeepRacer via the new Gym interface (no real-world test).",
@@ -654,6 +625,11 @@ class FtV2_05_WhyBT(SlideShow):
 class FtV2_06_NLHFIntro(SlideShow):
     def __init__(self, **kwargs):
         super().__init__(slides=_scene06_nlhf_intro(), **kwargs)
+
+
+class FtV2_NLHFResults(SlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=_scene06b_nlhf_results(), **kwargs)
 
 
 class FtV2_07_NoMoreBT(SlideShow):
