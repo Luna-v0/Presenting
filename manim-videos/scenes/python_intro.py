@@ -468,3 +468,12 @@ class PyIntro_03_Philosophy(SlideShow):
 class PyIntro_04_Performance(SlideShow):
     def __init__(self, **kwargs):
         super().__init__(slides=[PythonPerformance()], **kwargs)
+
+    def construct(self):
+        # Last scene of the deck: end held on the final content instead of the
+        # SlideShow's usual fade-to-blank (that empty final slide is why "the
+        # last part of the performance did not appear"). self.wait() counts as
+        # an animation for manim-slides, so the trailing pause stays valid.
+        for slide in self.slides:
+            slide.draw(origin=None, scale=1.0, target_scene=self, animate=True)
+        self.wait(1)

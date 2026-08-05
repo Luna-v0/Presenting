@@ -1,0 +1,27 @@
+# Presentation — prebuilt HTML
+
+`python_intro.html` is a **self-contained** reveal.js export of the deck
+(scenes `PyIntro_01_Timeline`, `PyIntro_02_Manim`, `PyIntro_03_Philosophy`,
+`PyIntro_04_Performance`) with every video embedded. This folder is **committed**
+(unlike `slides/` and `media/`, which are gitignored), so on another machine you
+just `git pull` and open the file — no `uv`, manim, or LaTeX needed to present.
+
+## Present
+Open `python_intro.html` in any browser (double-click, or `xdg-open python_intro.html`).
+
+Navigation: **→ / Space** next · **←** previous · **F** fullscreen · **Esc** overview.
+
+The browser fits the 16:9 video to the window (`background-size: contain`), so the
+aspect ratio stays correct — clean letterbox bars instead of a stretched image.
+Fullscreen on a 16:9 monitor fills the screen edge-to-edge.
+
+## Rebuild (after editing scenes/python_intro.py)
+```bash
+cd manim-videos
+uv run manim-slides render scenes/python_intro.py \
+    PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \
+    -q h --disable_caching
+uv run manim-slides convert \
+    PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \
+    presentation/python_intro.html -cdata_uri=true -ccontrols=true
+```
