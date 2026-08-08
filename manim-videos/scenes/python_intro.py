@@ -6,6 +6,9 @@ Built from screenplays/python_into.md. Scenes:
     PyIntro_02_Manim       "these slides are made with Python + Manim" (logo + code)
     PyIntro_03_Philosophy  verbose Java morphs into short Python
     PyIntro_04_Performance Python → C/C++/Rust hidden behind NumPy/pandas
+    PyIntro_05_CommandLine the command line — python <arquivo>, pip install <pacote>
+    PyIntro_06_Venv        virtual environments — install packages, contained
+    PyIntro_07_Jupyter     notebooks — stacked cells share one kernel (state)
 
 The first two H1s of the screenplay share one scene so the timeline line is a
 single persistent mobject — it never fades between 1991 and 2026, only the year
@@ -15,15 +18,18 @@ Per the screenplay's direction, NO spoken narration ("Fala") is placed on the
 slides — only the visuals and the on-screen text called for by each
 "Visual"/"Texto" note.
 
-Domain icons are Tabler outline SVGs in scenes/assets/icons/. Guido's photo lives
-at scenes/assets/guido.jpg (a labelled placeholder shows if it is missing).
+Domain images live in scenes/assets/ (deepracer/datavis/LLM/webdev + guido.jpg);
+a labelled placeholder shows if one is missing.
 
-Render & present:
+Render & present (PyIntro_07_Jupyter is the last scene — it holds on its final
+content instead of fading to blank):
     uv run manim-slides render scenes/python_intro.py \\
         PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \\
+        PyIntro_05_CommandLine PyIntro_06_Venv PyIntro_07_Jupyter \\
         -q h --disable_caching
     uv run manim-slides present \\
-        PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance
+        PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \\
+        PyIntro_05_CommandLine PyIntro_06_Venv PyIntro_07_Jupyter
 
 Note: re-renders need --disable_caching (a manim-slides caching quirk otherwise
 raises "you have to play at least one animation before pausing").
@@ -40,6 +46,7 @@ from manim import (
     ORIGIN,
     RIGHT,
     UP,
+    Arrow,
     Circle,
     Create,
     Dot,
@@ -54,6 +61,7 @@ from manim import (
     ReplacementTransform,
     Rectangle,
     Square,
+    SurroundingRectangle,
     Text,
     Transform,
     Triangle,
@@ -155,13 +163,23 @@ def beamer_panel(title: str, items, font_size: int = 26, max_width: float = 6.6)
     return group
 
 
-def code_block(lines, font_size: int):
+def code_block(lines, font_size: int, width: float = None, align: str = "center",
+               fill: str = "#f6f8fa", stroke: str = "#cccccc"):
     """A monospace code panel (sharp rectangle). Single multi-line Text so Pango
-    keeps the indentation (per-line VGroups would left-snap and lose it)."""
+    keeps the indentation (per-line VGroups would left-snap and lose it).
+
+    ``width`` forces a fixed panel width (else it hugs the code); ``align='left'``
+    left-justifies the code inside the panel (for terminal / notebook cells).
+    """
     code = Text("\n".join(lines), font=MONO, color=BLACK, font_size=font_size, line_spacing=0.6)
-    box = Rectangle(width=code.width + 0.9, height=code.height + 0.7, color="#cccccc",
-                    fill_color="#f6f8fa", fill_opacity=1.0, stroke_width=2)
-    code.move_to(box.get_center())
+    w = code.width + 0.9 if width is None else width
+    box = Rectangle(width=w, height=code.height + 0.7, color=stroke,
+                    fill_color=fill, fill_opacity=1.0, stroke_width=2)
+    if align == "left":
+        code.align_to(box, LEFT).shift(RIGHT * 0.45)
+        code.set_y(box.get_center()[1])
+    else:
+        code.move_to(box.get_center())
     return {"box": box, "code": code}
 
 
@@ -447,8 +465,189 @@ class PythonPerformance(VisualSlide):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Scene 5 — A linha de comando (python <arquivo>, pip install <pacote>)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class CommandLineSlide(VisualSlide):
+    def __init__(self):
+        super().__init__(title="A linha de comando", subtitle=None)
+
+    def draw(self, origin=None, scale=1.0, target_scene=None, animate=True):
+        ts = target_scene if target_scene is not None else self
+        self.reset_camera(ts)
+        ts.play(Write(self.make_title()))
+        ts.next_slide()
+
+        # Two commands, each with an arrow to its explanation.
+        rows = [
+            ("$ python <arquivo>.py", "Executa um arquivo Python"),
+            ("$ pip install <pacote>", "Instala um pacote (do PyPI)"),
+        ]
+        for (cmd, expl), y in zip(rows, [0.9, -0.9]):
+            cb = code_block([cmd], font_size=24, align="left")
+            cmd_group = VGroup(cb["box"], cb["code"]).move_to([-3.3, y, 0])
+            over = -6.6 - cmd_group.get_left()[0]
+            if over > 0:
+                cmd_group.shift(RIGHT * over)
+            expl_t = text(expl, font_size=26, weight="BOLD", color=PY_BLUE).move_to([3.3, y, 0])
+            arrow = Arrow(cmd_group.get_right(), expl_t.get_left(), buff=0.35,
+                          color=BLACK, stroke_width=3, max_tip_length_to_length_ratio=0.18)
+            ts.play(Create(cb["box"]), Write(cb["code"]))
+            ts.play(Create(arrow), Write(expl_t))
+            ts.next_slide()
+
+        caption = text("Os dois comandos que você mais vai usar",
+                       font_size=26, weight="BOLD", color=PY_BLUE)
+        if caption.width > 13:
+            caption.scale_to_fit_width(13)
+        caption.move_to([0, -2.9, 0])
+        ts.play(Write(caption))
+        ts.wait(0.5)
+        ts.next_slide()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scene 6 — Ambientes virtuais (venv)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class VenvSlide(VisualSlide):
+    def __init__(self):
+        super().__init__(title="Ambientes virtuais (venv)", subtitle=None)
+
+    def draw(self, origin=None, scale=1.0, target_scene=None, animate=True):
+        ts = target_scene if target_scene is not None else self
+        self.reset_camera(ts)
+        ts.play(Write(self.make_title()))
+        ts.next_slide()
+
+        # Terminal commands on the left (kept inside the left frame edge).
+        term = code_block(
+            [
+                "$ python -m venv .venv",
+                "$ source .venv/bin/activate",
+                "(.venv) $ pip install numpy pandas",
+            ],
+            font_size=20, align="left",
+        )
+        term_lbl = text("Terminal", font_size=22, weight="BOLD", color=PY_BLUE)
+        term_group = VGroup(term_lbl, term["box"], term["code"])
+        term_lbl.next_to(term["box"], UP, buff=0.15).align_to(term["box"], LEFT)
+        term_group.move_to([-3.5, 0.3, 0])
+        left_over = -6.7 - term_group.get_left()[0]
+        if left_over > 0:
+            term_group.shift(RIGHT * left_over)
+        ts.play(Create(term["box"]), Write(term["code"]), Write(term_lbl))
+        ts.next_slide()
+
+        # The contained environment on the right — box auto-sized to its content.
+        venv_lbl = text(".venv", font_size=26, weight="BOLD", color=PY_BLUE)
+        pkgs = VGroup(*[
+            labeled_box(p, fill_color="#e8eef5", stroke_color=PY_BLUE,
+                        width=2.4, height=0.6, font_size=22)
+            for p in ["numpy", "pandas", "requests"]
+        ]).arrange(DOWN, buff=0.22)
+        inner = VGroup(venv_lbl, pkgs).arrange(DOWN, buff=0.3)
+        inner.move_to([3.5, 0.25, 0])
+        container = SurroundingRectangle(
+            inner, color=PY_BLUE, fill_color="#eef3f8", fill_opacity=1.0,
+            buff=0.4, stroke_width=3, corner_radius=0.0,
+        ).set_z_index(-1)
+        ts.play(Create(container), Write(venv_lbl))
+        ts.next_slide()
+
+        # Packages land inside the box (installed into the environment).
+        ts.play(*[FadeIn(p, shift=UP * 0.2) for p in pkgs], run_time=1.2)
+        ts.next_slide()
+
+        caption = text("Pacotes ficam contidos no ambiente — isolados do sistema",
+                       font_size=26, weight="BOLD", color=PY_BLUE)
+        if caption.width > 13:
+            caption.scale_to_fit_width(13)
+        caption.move_to([0, -3.2, 0])
+        ts.play(Write(caption))
+        ts.wait(0.5)
+        ts.next_slide()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scene 7 — Jupyter Notebooks (stacked cells share one kernel)
+# ─────────────────────────────────────────────────────────────────────────────
+
+JUPYTER_RED = "#e07a5f"
+
+
+class JupyterSlide(VisualSlide):
+    def __init__(self):
+        super().__init__(title="Jupyter Notebooks", subtitle=None)
+
+    def draw(self, origin=None, scale=1.0, target_scene=None, animate=True):
+        ts = target_scene if target_scene is not None else self
+        self.reset_camera(ts)
+        ts.play(Write(self.make_title()))
+        ts.next_slide()
+
+        # Stacked cells — a document made of code blocks.
+        cell_w = 4.6
+        cells_src = [(1, ["x = 10"]), (2, ["y = x * 2"]), (3, ["print(x, y)   # 10 20"])]
+        cells = VGroup()
+        for n, lines in cells_src:
+            cb = code_block(lines, font_size=24, width=cell_w, align="left")
+            prompt = text(f"In [{n}]:", font_size=20, weight="BOLD", color=PY_BLUE, font=MONO)
+            prompt.next_to(cb["box"], LEFT, buff=0.2)
+            cells.add(VGroup(prompt, cb["box"], cb["code"]))
+        cells.arrange(DOWN, buff=0.35, aligned_edge=LEFT)
+        cells.move_to([-0.9, 0.25, 0])
+        for cell in cells:
+            ts.play(FadeIn(cell, shift=UP * 0.2), run_time=0.5)
+        ts.next_slide()
+
+        # One kernel spine on the left, connected to every cell → shared state.
+        spine_x = cells.get_left()[0] - 0.7
+        spine = Line([spine_x, cells.get_top()[1], 0], [spine_x, cells.get_bottom()[1], 0],
+                     color=JUPYTER_RED, stroke_width=5)
+        connectors = VGroup(*[
+            Line([spine_x, c.get_center()[1], 0], [c.get_left()[0], c.get_center()[1], 0],
+                 color=JUPYTER_RED, stroke_width=2)
+            for c in cells
+        ])
+        kernel_lbl = text("Kernel", font_size=24, weight="BOLD", color=JUPYTER_RED)
+        kernel_lbl.next_to(spine, LEFT, buff=0.25)
+        ts.play(Create(spine), *[Create(c) for c in connectors], Write(kernel_lbl))
+        ts.next_slide()
+
+        # What the notebook is, on the right.
+        notes = VGroup(
+            text("Documento + ambiente Python", font_size=24, weight="BOLD"),
+            text("1 kernel por servidor", font_size=22),
+            text("e por documento", font_size=22),
+        ).arrange(DOWN, aligned_edge=LEFT, buff=0.25)
+        notes.move_to([4.4, 0.6, 0])
+        ts.play(*[FadeIn(line, shift=RIGHT * 0.2) for line in notes], run_time=1.0)
+        ts.next_slide()
+
+        caption = text("O que roda em uma célula afeta as outras (estado compartilhado)",
+                       font_size=26, weight="BOLD", color=JUPYTER_RED)
+        if caption.width > 13:
+            caption.scale_to_fit_width(13)
+        caption.move_to([0, -3.2, 0])
+        ts.play(Write(caption))
+        ts.wait(0.5)
+        ts.next_slide()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Public Scene classes — render order matches the screenplay
 # ─────────────────────────────────────────────────────────────────────────────
+
+class EndHeldSlideShow(SlideShow):
+    """A SlideShow that ends held on its final content instead of the default
+    fade-to-blank — use it for the LAST scene of the deck so nothing vanishes."""
+
+    def construct(self):
+        for slide in self.slides:
+            slide.draw(origin=None, scale=1.0, target_scene=self, animate=True)
+        self.wait(1)  # counts as an animation, so the trailing pause stays valid
+
 
 class PyIntro_01_Timeline(SlideShow):
     def __init__(self, **kwargs):
@@ -469,11 +668,17 @@ class PyIntro_04_Performance(SlideShow):
     def __init__(self, **kwargs):
         super().__init__(slides=[PythonPerformance()], **kwargs)
 
-    def construct(self):
-        # Last scene of the deck: end held on the final content instead of the
-        # SlideShow's usual fade-to-blank (that empty final slide is why "the
-        # last part of the performance did not appear"). self.wait() counts as
-        # an animation for manim-slides, so the trailing pause stays valid.
-        for slide in self.slides:
-            slide.draw(origin=None, scale=1.0, target_scene=self, animate=True)
-        self.wait(1)
+
+class PyIntro_05_CommandLine(SlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=[CommandLineSlide()], **kwargs)
+
+
+class PyIntro_06_Venv(SlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=[VenvSlide()], **kwargs)
+
+
+class PyIntro_07_Jupyter(EndHeldSlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=[JupyterSlide()], **kwargs)
