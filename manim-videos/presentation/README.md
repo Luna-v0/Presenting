@@ -1,8 +1,9 @@
 # Presentation — prebuilt exports
 
 Two prebuilt exports of the deck (scenes `PyIntro_01_Timeline`, `PyIntro_02_Manim`,
-`PyIntro_03_Philosophy`, `PyIntro_04_Performance`, `PyIntro_05_CommandLine`,
-`PyIntro_06_Venv`, `PyIntro_07_Jupyter`):
+`PyIntro_03_Philosophy`, `PyIntro_04_Performance`, `PyIntro_05_Basics`,
+`PyIntro_06_CommandLine`, `PyIntro_07_Venv`, `PyIntro_08_Jupyter`,
+`PyIntro_09_Pause`, `PyIntro_10_DataStructures`):
 
 - **`python_intro.html`** — a self-contained reveal.js presentation with every
   video embedded (animated).
@@ -25,7 +26,8 @@ Fullscreen on a 16:9 monitor fills the screen edge-to-edge.
 ```bash
 cd manim-videos
 SCENES="PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \
-PyIntro_05_CommandLine PyIntro_06_Venv PyIntro_07_Jupyter"
+PyIntro_05_Basics PyIntro_06_CommandLine PyIntro_07_Venv PyIntro_08_Jupyter \
+PyIntro_09_Pause PyIntro_10_DataStructures"
 uv run manim-slides render scenes/python_intro.py $SCENES -q h --disable_caching
 uv run manim-slides convert $SCENES presentation/python_intro.html -cdata_uri=true -ccontrols=true
 # PDF (one page per slide)

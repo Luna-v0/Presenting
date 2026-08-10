@@ -6,9 +6,12 @@ Built from screenplays/python_into.md. Scenes:
     PyIntro_02_Manim       "these slides are made with Python + Manim" (logo + code)
     PyIntro_03_Philosophy  verbose Java morphs into short Python
     PyIntro_04_Performance Python → C/C++/Rust hidden behind NumPy/pandas
-    PyIntro_05_CommandLine the command line — python <arquivo>, pip install <pacote>
-    PyIntro_06_Venv        virtual environments — install packages, contained
-    PyIntro_07_Jupyter     notebooks — stacked cells share one kernel (state)
+    PyIntro_05_Basics      variables & if/else — verbose C vs clean Python
+    PyIntro_06_CommandLine the command line — python <arquivo>, pip install <pacote>
+    PyIntro_07_Venv        virtual environments — install packages, contained
+    PyIntro_08_Jupyter     notebooks — stacked cells share one kernel (state)
+    PyIntro_09_Pause       divider — "Botando a mão na massa"
+    PyIntro_10_DataStructures list / tuple / set / dict, with tiny examples
 
 The first two H1s of the screenplay share one scene so the timeline line is a
 single persistent mobject — it never fades between 1991 and 2026, only the year
@@ -21,15 +24,17 @@ slides — only the visuals and the on-screen text called for by each
 Domain images live in scenes/assets/ (deepracer/datavis/LLM/webdev + guido.jpg);
 a labelled placeholder shows if one is missing.
 
-Render & present (PyIntro_07_Jupyter is the last scene — it holds on its final
-content instead of fading to blank):
+Render & present (PyIntro_10_DataStructures is the last scene — it holds on its
+final content instead of fading to blank):
     uv run manim-slides render scenes/python_intro.py \\
         PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \\
-        PyIntro_05_CommandLine PyIntro_06_Venv PyIntro_07_Jupyter \\
+        PyIntro_05_Basics PyIntro_06_CommandLine PyIntro_07_Venv PyIntro_08_Jupyter \\
+        PyIntro_09_Pause PyIntro_10_DataStructures \\
         -q h --disable_caching
     uv run manim-slides present \\
         PyIntro_01_Timeline PyIntro_02_Manim PyIntro_03_Philosophy PyIntro_04_Performance \\
-        PyIntro_05_CommandLine PyIntro_06_Venv PyIntro_07_Jupyter
+        PyIntro_05_Basics PyIntro_06_CommandLine PyIntro_07_Venv PyIntro_08_Jupyter \\
+        PyIntro_09_Pause PyIntro_10_DataStructures
 
 Note: re-renders need --disable_caching (a manim-slides caching quirk otherwise
 raises "you have to play at least one animation before pausing").
@@ -465,7 +470,77 @@ class PythonPerformance(VisualSlide):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Scene 5 — A linha de comando (python <arquivo>, pip install <pacote>)
+# Scene 5 — O básico de Python (variáveis e condicionais)
+# ─────────────────────────────────────────────────────────────────────────────
+
+C_BASICS = [
+    "#include <stdio.h>",
+    "",
+    "int main() {",
+    '    char nome[] = "Ana";',
+    "    int idade = 20;",
+    "    if (idade >= 18) {",
+    '        printf("maior de idade");',
+    "    } else {",
+    '        printf("menor de idade");',
+    "    }",
+    "    return 0;",
+    "}",
+]
+
+PY_BASICS = [
+    'nome = "Ana"',
+    "idade = 20",
+    "if idade >= 18:",
+    '    print("maior de idade")',
+    "else:",
+    '    print("menor de idade")',
+]
+
+C_COLOR = "#5c6bc0"
+
+
+class PythonBasicsSlide(VisualSlide):
+    def __init__(self):
+        super().__init__(title="O básico de Python", subtitle=None)
+
+    def draw(self, origin=None, scale=1.0, target_scene=None, animate=True):
+        ts = target_scene if target_scene is not None else self
+        self.reset_camera(ts)
+        ts.play(Write(self.make_title()))
+        ts.next_slide()
+
+        # Same tiny program (variables + if/else) — verbose C vs clean Python.
+        c = code_block(C_BASICS, font_size=18, align="left")
+        c_lbl = text("C", font_size=24, weight="BOLD", color=C_COLOR)
+        c_group = VGroup(c_lbl, c["box"], c["code"])
+        c_lbl.next_to(c["box"], UP, buff=0.15).align_to(c["box"], LEFT)
+        c_group.move_to([-3.6, -0.35, 0])
+        ts.play(Create(c["box"]), Write(c["code"]), Write(c_lbl))
+        ts.next_slide()
+
+        py = code_block(PY_BASICS, font_size=22, align="left")
+        py_lbl = text("Python", font_size=24, weight="BOLD", color=PY_BLUE)
+        py_group = VGroup(py_lbl, py["box"], py["code"])
+        py_lbl.next_to(py["box"], UP, buff=0.15).align_to(py["box"], LEFT)
+        py_group.move_to([3.6, 0, 0])
+        # align the Python panel's top with the C panel's top
+        py_group.shift(UP * (c["box"].get_top()[1] - py["box"].get_top()[1]))
+        ts.play(Create(py["box"]), Write(py["code"]), Write(py_lbl))
+        ts.next_slide()
+
+        caption = text("Sem tipos, sem chaves, sem ponto e vírgula — a indentação define os blocos",
+                       font_size=24, weight="BOLD", color=PY_BLUE)
+        if caption.width > 13.5:
+            caption.scale_to_fit_width(13.5)
+        caption.move_to([0, -3.5, 0])
+        ts.play(Write(caption))
+        ts.wait(0.5)
+        ts.next_slide()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scene 6 — A linha de comando (python <arquivo>, pip install <pacote>)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class CommandLineSlide(VisualSlide):
@@ -507,7 +582,7 @@ class CommandLineSlide(VisualSlide):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Scene 6 — Ambientes virtuais (venv)
+# Scene 7 — Ambientes virtuais (venv)
 # ─────────────────────────────────────────────────────────────────────────────
 
 class VenvSlide(VisualSlide):
@@ -570,7 +645,7 @@ class VenvSlide(VisualSlide):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Scene 7 — Jupyter Notebooks (stacked cells share one kernel)
+# Scene 8 — Jupyter Notebooks (stacked cells share one kernel)
 # ─────────────────────────────────────────────────────────────────────────────
 
 JUPYTER_RED = "#e07a5f"
@@ -636,6 +711,65 @@ class JupyterSlide(VisualSlide):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# Scene 9 — Pause / section divider
+# ─────────────────────────────────────────────────────────────────────────────
+
+class PauseSlide(VisualSlide):
+    def __init__(self):
+        super().__init__(title="Botando a mão na massa", subtitle=None)
+
+    def draw(self, origin=None, scale=1.0, target_scene=None, animate=True):
+        ts = target_scene if target_scene is not None else self
+        self.reset_camera(ts)
+
+        phrase = text("Botando a mão na massa", font_size=64, weight="BOLD")
+        if phrase.width > 12.5:
+            phrase.scale_to_fit_width(12.5)
+        phrase.move_to([0, 0.25, 0])
+        underline = Line(phrase.get_left(), phrase.get_right(),
+                         color=PY_BLUE, stroke_width=5)
+        underline.next_to(phrase, DOWN, buff=0.3)
+        ts.play(Write(phrase))
+        ts.play(Create(underline))
+        ts.wait(0.5)
+        ts.next_slide()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Scene 10 — Estruturas de dados (list / tuple / set / dict)
+# ─────────────────────────────────────────────────────────────────────────────
+
+class DataStructuresSlide(VisualSlide):
+    def __init__(self):
+        super().__init__(title="Estruturas de dados", subtitle=None)
+
+    def draw(self, origin=None, scale=1.0, target_scene=None, animate=True):
+        ts = target_scene if target_scene is not None else self
+        self.reset_camera(ts)
+        ts.play(Write(self.make_title()))
+        ts.next_slide()
+
+        # 2×2 grid: type + one-line property, with a tiny example.
+        # Columns are anchored by their LEFT edge so the widest box stays on-screen.
+        left_x, right_x = -6.3, 0.7
+        specs = [
+            ("list — ordenada, mutável", 'frutas = ["maçã", "banana"]', left_x, 1.5),
+            ("tuple — ordenada, imutável", "ponto = (10, 20)", right_x, 1.5),
+            ("set — sem ordem, únicos", "ids = {1, 2, 3}", left_x, -1.6),
+            ("dict — chave → valor", 'pessoa = {"nome": "Ana"}', right_x, -1.6),
+        ]
+        for label, code_line, x_left, y in specs:
+            cb = code_block([code_line], font_size=20, align="left")  # hug content
+            lbl = text(label, font_size=22, weight="BOLD", color=PY_BLUE)
+            cell = VGroup(lbl, cb["box"], cb["code"])
+            lbl.next_to(cb["box"], UP, buff=0.12).align_to(cb["box"], LEFT)
+            cell.move_to([0, y, 0])
+            cell.shift(RIGHT * (x_left - cb["box"].get_left()[0]))  # anchor box left edge
+            ts.play(Create(cb["box"]), Write(cb["code"]), Write(lbl))
+            ts.next_slide()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # Public Scene classes — render order matches the screenplay
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -669,16 +803,31 @@ class PyIntro_04_Performance(SlideShow):
         super().__init__(slides=[PythonPerformance()], **kwargs)
 
 
-class PyIntro_05_CommandLine(SlideShow):
+class PyIntro_05_Basics(SlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=[PythonBasicsSlide()], **kwargs)
+
+
+class PyIntro_06_CommandLine(SlideShow):
     def __init__(self, **kwargs):
         super().__init__(slides=[CommandLineSlide()], **kwargs)
 
 
-class PyIntro_06_Venv(SlideShow):
+class PyIntro_07_Venv(SlideShow):
     def __init__(self, **kwargs):
         super().__init__(slides=[VenvSlide()], **kwargs)
 
 
-class PyIntro_07_Jupyter(EndHeldSlideShow):
+class PyIntro_08_Jupyter(SlideShow):
     def __init__(self, **kwargs):
         super().__init__(slides=[JupyterSlide()], **kwargs)
+
+
+class PyIntro_09_Pause(SlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=[PauseSlide()], **kwargs)
+
+
+class PyIntro_10_DataStructures(EndHeldSlideShow):
+    def __init__(self, **kwargs):
+        super().__init__(slides=[DataStructuresSlide()], **kwargs)
