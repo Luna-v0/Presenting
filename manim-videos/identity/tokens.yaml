@@ -1,0 +1,101 @@
+# Presenting — identity tokens.
+#
+# Single source of truth for colour, type and geometry. Everything downstream
+# reads this file: the manim layout library (presenting_lib/tokens.py) and the
+# four exporters in this directory (beamer, pptx, drawio, matplotlib).
+#
+# Settled with the human by rendering and iterating. Do not re-derive the
+# palette; see plan §2 and §10.
+
+palette:
+  ground:  "#E4DCC6"      # sand, the slide ground
+  ink:     "#232A24"      # all body text
+  muted:   "#5F5A4B"      # captions, footer, page number
+
+  structure:
+    fill:   "#CFC6AE"     # neutral boxes — sand family, deliberately quiet
+    stroke: "#8C8470"
+    # Known weakness: #CFC6AE on #E4DCC6 is subtle and a projector flattens it
+    # further. If boxes vanish in a real room, push *stroke* toward ink.
+    # Do not brighten the fill. (plan §2.3)
+
+  green:                  # accent A
+    tint:   "#CCE0C6"
+    mid:    "#3D6349"     # strokes, rules, the active progress dot
+    dark:   "#1E3527"     # text sitting on tint
+
+  yellow:                 # accent B
+    tint:   "#F6E5A5"
+    mid:    "#A87F20"
+    dark:   "#55400E"     # text sitting on tint
+
+# The accent rule (plan §2.4)
+#
+#   There are exactly two accents. They are a categorical encoding, not
+#   decoration. Each has a fixed meaning holding across the whole deck, and
+#   both may appear on one beat when they mark genuinely different things.
+#   Never introduce a third.
+#
+# The encoding is POSITIONAL, not valenced. Green does not mean good and yellow
+# does not mean warning — they mark *which of two things* is being talked about
+# when two things are being related to each other. Highlighting two terms of one
+# formula and explaining how they interact is the case they exist for, and it is
+# why one-accent-per-beat died.
+#
+# A consequence worth stating: a beat that marks only one thing uses green. A
+# lone yellow mark means "the second of two" with no first, which is a beat that
+# has lost half its point.
+accents:
+  green:
+    meaning: >-
+      The first of two things being related — the primary term under
+      discussion. Also the only accent to use when a beat marks just one thing.
+  yellow:
+    meaning: >-
+      The second of two things being related — the term the first one is being
+      compared, contrasted or connected to. Never used alone.
+
+type:
+  # Each family is a candidate list, resolved at import to the first installed.
+  #
+  # Liberation, deliberately, not TeX Gyre Termes. The decisive point is not how
+  # they look but where they are: a talk often gets presented from a machine
+  # that is not yours, and a font that is not on it silently becomes something
+  # else. Liberation Serif is metric-compatible with Times New Roman and
+  # Liberation Mono with Courier New, so the pptx target degrades to an
+  # identical-width face on any Windows or Mac rather than reflowing. See
+  # identity/export_pptx.py::PORTABLE_FAMILIES.
+  #
+  # min_legible_body below was measured in Liberation Serif, so it stays valid.
+  # Changing these families means re-running scripts/measure_slots.py.
+  family_display: ["Liberation Serif", "DejaVu Serif"]
+  family_body:    ["Liberation Serif", "DejaVu Serif"]
+  family_mono:    ["Liberation Mono", "DejaVu Sans Mono"]
+
+  # Multipliers on `base_font_size`. A size not in this scale is a missing
+  # scale step, not a local override — no call site sets font_size directly.
+  base_font_size: 30      # manim font_size units, the "body" step
+  scale:
+    display: 2.4
+    title:   1.8
+    claim:   1.4
+    body:    1.0
+    caption: 0.8
+    # Chrome, not content: the section label and the page number are glanced
+    # at, never read from the back of the room, so they sit below the
+    # legibility floor on purpose. See presenting_lib/slots.py::floor_size.
+    footer:  0.52
+
+  # Calibrated empirically, not guessed: scripts/measure_slots.py --calibrate
+  # renders a descending ladder of sizes to a 1080p frame; the value below is
+  # the smallest step still comfortable at arm's length on a laptop, which
+  # approximates the back of a room. See identity/legibility.md for the frame
+  # and the reasoning. In manim font_size units at 1920x1080.
+  min_legible_body: 22
+
+geometry:
+  # In manim units. Frame is 14.222 x 8.0.
+  safe_inset: 0.6
+  gutter: 0.5
+  stroke_weight: 3.0
+  corner_radius: 0.12

@@ -1,0 +1,15 @@
+{
+  "name": "presenting-manim",
+  "version": "0.1.0",
+  "description": "The Presenting pipeline: brief, screenplay, shot list, render, review — plus a repo-local Manim MCP server. Turns a whiteboard photo or a topic into a manim-slides deck, and carries judgement from watching it back into the next revision.",
+  "author": {
+    "name": "lunav0"
+  },
+  "license": "UNLICENSED",
+  "keywords": [
+    "manim",
+    "presentation",
+    "slides",
+    "screenplay"
+  ]
+}

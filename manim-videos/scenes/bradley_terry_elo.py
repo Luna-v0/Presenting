@@ -8,22 +8,33 @@ from manim_slides import Slide
 import numpy as np
 
 
-# ── Palette (white background) ───────────────────────────────────────
-BG        = WHITE
-TEXT_C    = BLACK
-NEUTRAL_C = DARK_GRAY
-BT_C      = "#1565C0"   # blue — BT formula accent
-EXP_C     = "#2E7D32"   # green — exponential form
-SIG_C     = "#D84315"   # deep orange — sigmoid
-SOFT_C    = "#F9A825"   # amber — softmax highlight
-MODEL_A_C = "#1565C0"
-MODEL_B_C = "#C62828"
-ELO_C     = "#6A1B9A"   # purple — Elo
+# ── Palette ──────────────────────────────────────────────────────────
+# On the deck identity (identity/tokens.yaml), not this scene's own colours.
+# Six hues became two accents, which is the whole point of having exactly two:
+#   * the formula's term under discussion is green at every stage — softmax,
+#     exponential, sigmoid and Elo are the same object being rewritten, so
+#     giving each a hue said "these are four different things", which is the
+#     opposite of what the morph is showing;
+#   * the two competing models are green and yellow — two things being related
+#     is precisely what the accent pair encodes.
+from presenting_lib.tokens import PALETTE
+
+BG        = ManimColor(PALETTE.ground)
+TEXT_C    = PALETTE.ink
+NEUTRAL_C = PALETTE.muted
+BT_C      = PALETTE.green.mid    # the term under discussion, at every stage
+EXP_C     = PALETTE.green.mid
+SIG_C     = PALETTE.green.mid
+SOFT_C    = PALETTE.green.mid
+MODEL_A_C = PALETTE.green.mid    # first of the two being compared
+MODEL_B_C = PALETTE.yellow.mid   # second of the two
+ELO_C     = PALETTE.green.mid
 
 
 class BradleyTerryToElo(Slide):
     def construct(self):
         self.camera.background_color = BG
+        self.camera.init_background()
         self.scene_bt_formula()
         self.scene_numeric_example()
         self.scene_elo_leaderboard()
@@ -176,12 +187,15 @@ class BradleyTerryToElo(Slide):
         self.next_slide()
 
         # Chess leaderboard
+        # A ranking, not five categories. Five hues implied the players differ
+        # in kind; they differ in rating. Structure for the field, green for the
+        # one at the top — which is the thing the slide is pointing at.
         players_data = [
-            ("Magnus Carlsen",    2830, "#1565C0"),
-            ("Fabiano Caruana",   2786, "#6A1B9A"),
-            ("Hikaru Nakamura",   2760, "#00695C"),
-            ("Ding Liren",        2728, "#D84315"),
-            ("Ian Nepomniachtchi", 2693, "#C62828"),
+            ("Magnus Carlsen",    2830, PALETTE.green.mid),
+            ("Fabiano Caruana",   2786, PALETTE.structure_stroke),
+            ("Hikaru Nakamura",   2760, PALETTE.structure_stroke),
+            ("Ding Liren",        2728, PALETTE.structure_stroke),
+            ("Ian Nepomniachtchi", 2693, PALETTE.structure_stroke),
         ]
         rows = VGroup()
         for rank, (name, elo, col) in enumerate(players_data, 1):

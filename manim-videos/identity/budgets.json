@@ -1,0 +1,120 @@
+{
+  "manim": {
+    "activity-parking": {
+      "constraints": 560,
+      "instructions": 999
+    },
+    "activity-setup": {
+      "example": 606,
+      "task": 282
+    },
+    "build-list": {
+      "claim": 146,
+      "items": 1039
+    },
+    "callout": {
+      "statement": 472
+    },
+    "claim-above-figure": {
+      "caption": 93,
+      "claim": 146
+    },
+    "claim-only": {
+      "claim": 618
+    },
+    "discussion": {
+      "prompt": 496
+    },
+    "equation-annotated": {
+      "annotation1": 323,
+      "annotation2": 323
+    },
+    "figure-with-callouts": {
+      "callout1": 122,
+      "callout2": 122,
+      "callout3": 122
+    },
+    "section-break": {
+      "claim": 309,
+      "section": 75
+    },
+    "table-accented": {
+      "claim": 146
+    },
+    "term-reveal": {
+      "definition": 866,
+      "definition_half": 560,
+      "term": 49
+    },
+    "title-card": {
+      "affiliation": 77,
+      "author": 155,
+      "date": 77,
+      "subtitle": 129,
+      "title": 75
+    },
+    "two-up-compare": {
+      "label_l": 38,
+      "label_r": 38
+    }
+  },
+  "pptx": {
+    "activity-parking": {
+      "constraints": 540,
+      "instructions": 982
+    },
+    "activity-setup": {
+      "example": 759,
+      "task": 270
+    },
+    "build-list": {
+      "claim": 145,
+      "items": 1037
+    },
+    "callout": {
+      "statement": 472
+    },
+    "claim-above-figure": {
+      "caption": 93,
+      "claim": 145
+    },
+    "claim-only": {
+      "claim": 616
+    },
+    "discussion": {
+      "prompt": 496
+    },
+    "equation-annotated": {
+      "annotation1": 311,
+      "annotation2": 311
+    },
+    "figure-with-callouts": {
+      "callout1": 122,
+      "callout2": 122,
+      "callout3": 122
+    },
+    "section-break": {
+      "claim": 309,
+      "section": 64
+    },
+    "table-accented": {
+      "claim": 145
+    },
+    "term-reveal": {
+      "definition": 976,
+      "definition_half": 541,
+      "term": 49
+    },
+    "title-card": {
+      "affiliation": 77,
+      "author": 154,
+      "date": 77,
+      "subtitle": 128,
+      "title": 64
+    },
+    "two-up-compare": {
+      "label_l": 36,
+      "label_r": 36
+    }
+  }
+}

@@ -13,19 +13,27 @@ from manim import *
 from manim_slides import Slide
 
 
-# ── Palette (white background) ───────────────────────────────────────
-BG        = WHITE
-TEXT_C    = BLACK
-NEUTRAL_C = DARK_GRAY
-ADV_C     = "#D84315"   # deep orange — advantage
-BASE_C    = "#6A1B9A"   # purple — baseline b / ½
-PREF_C    = "#1565C0"   # blue — preference probability
-KL_C      = "#00695C"   # teal — KL penalty
+# ── Palette ──────────────────────────────────────────────────────────
+# On the deck identity (identity/tokens.yaml). The scene relates two threads —
+# the advantage and the baseline it is measured against — and that is exactly
+# what the accent pair encodes: green is the first of two things being related,
+# yellow the second. The KL penalty is a modifier on the pair rather than a
+# third member of it, so it recedes to muted instead of taking a third colour.
+from presenting_lib.tokens import PALETTE
+
+BG        = ManimColor(PALETTE.ground)
+TEXT_C    = PALETTE.ink
+NEUTRAL_C = PALETTE.muted
+ADV_C     = PALETTE.green.mid     # the advantage — the primary thread
+PREF_C    = PALETTE.green.mid     # the preference probability that defines it
+BASE_C    = PALETTE.yellow.mid    # the baseline b, and the 1/2 it turns out to be
+KL_C      = PALETTE.muted         # a modifier, not one of the two
 
 
 class NLHF(Slide):
     def construct(self):
         self.camera.background_color = BG
+        self.camera.init_background()
         self.scene_nlhf()
 
     def scene_nlhf(self):

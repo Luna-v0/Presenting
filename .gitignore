@@ -13,3 +13,9 @@ beamer_demo_assets/
 
 ## __pycache__ directories
 __pycache__/
+
+# Generated deck artifacts. The screenplay is the source; the scene module is
+# small and committed (it carries the render commands), the exports are not.
+manim-videos/decks/*/out/*.html
+manim-videos/decks/*/out/*.pptx
+manim-videos/decks/*/assets/built/
