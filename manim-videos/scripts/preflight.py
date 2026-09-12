@@ -8,14 +8,17 @@ a second here instead of forty minutes into a render.
 
 from __future__ import annotations
 
+import pathlib
 import sys
 
-from presenting_lib import compile as C, screenplay as sp
+from presenting_lib import assets, compile as C, screenplay as sp
 from presenting_lib.layouts import get_layout
 
 
 def check(path: str) -> int:
     deck = sp.load(path)
+    for done in assets.normalize_images(pathlib.Path(path).resolve().parent):
+        print(f"resize {done}")
     failures = 0
     for beat in deck.beats():
         if beat.is_raw():

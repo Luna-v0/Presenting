@@ -12,8 +12,16 @@ Load [manim-use](../manim-use/SKILL.md) first.
 1. Identify the target scene with `list_scenes`.
 2. Inspect the relevant file with `read_source`.
 3. Make the smallest change that addresses the current failure or visual issue.
-4. Re-render at low quality after each meaningful fix.
-5. If a legacy file fails but `scenes/title_card.py:TitleCard` still renders, treat the issue as scene-specific rather than an environment problem.
+4. Re-render **only the scene being fixed**, at low quality, after each
+   meaningful fix — never the whole file or deck. Tell the user which scene
+   class and file you touched and where the rendered output landed, so they
+   can point at the exact part next time.
+5. If even the single-scene render is slow, do not wait it out — find the cost
+   and shrink it first. The usual culprit is an oversized `ImageMobject`
+   source (anything over ~1600px on the long edge; deck assets are normalized
+   at compile, but hand-written scenes load images directly), or caching
+   disabled when it no longer needs to be.
+6. If a legacy file fails but `scenes/title_card.py:TitleCard` still renders, treat the issue as scene-specific rather than an environment problem.
 
 ## Common Cases
 

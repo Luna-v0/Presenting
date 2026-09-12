@@ -57,12 +57,63 @@ re-render at `-qp`.
 `--disable_caching` is needed after any library change; per-scene caching makes
 reruns cheap otherwise.
 
+Clear the media tree once after a library change, then drop the flag. Keeping it
+on breaks chunked rendering: a scene's config file is only written when the whole
+scene finishes, so if you are rendering under a wall-clock limit and a single 2K
+scene needs longer than one chunk, `--disable_caching` throws away its partial
+work and that scene can never complete no matter how many chunks you run. With
+caching on, each chunk resumes mid-scene.
+
+`-qh` does not work: manim-slides' own parser takes the `h` as its `-h` help
+flag, so it prints usage and **exits 0** — every scene reports success and nothing
+is written. Use `--quality h`. `-ql`, `-qm` and `-qp` are unaffected.
+
+**Photos are downscaled automatically at compile.** manim resamples every source
+pixel of an `ImageMobject` on every frame and does not care that the image is drawn
+at a fraction of its size. A 2551px-wide PNG inside a `FadeIn` measured at 8.8
+seconds *per frame*; the same photo at 1600px ran at 18.8 frames per second — about
+170x. So `compile_deck` (and `scripts/preflight.py`) run
+`presenting_lib.assets.normalize_images` first: any image in `assets/raw/` whose
+long edge exceeds 1600px is downscaled in place, with the untouched original moved
+to `assets/raw/_full/`. Screenplay paths keep working; each resize is reported as a
+`note` finding. Drop full-resolution photos straight into `assets/raw/` — the
+compile handles the rest. Still size a render *estimate* by its image pixels, not
+its beat count.
+
+At `-qp` the reversed-animation pass costs about 25-30s *per slide*, on top of
+the animation render — a seven-slide scene spends three to four minutes in
+concatenation alone. Budget for it rather than concluding the render has hung.
+
 **Budget the time.** 2K at 60fps is ~36x the pixel throughput of `-ql`, and a
 full uncached two-deck render measured at a few hours on this machine. Start it
 in the background, tell the user roughly how long it will be, and do something
 else — do not sit and poll it, and do not quietly downgrade to `-ql` because it
 is taking a while. If you need a fast look at a layout mid-iteration, render the
 *one scene* you changed at `-ql`, not the deck.
+
+## Fixing one section: render only that section
+
+When the user is iterating on a specific section or animation, never re-render
+the deck. The compiler emits **one scene class per section** — the names are in
+the generated module's header (`decks/<slug>/out/<slug>_scenes.py`), of the form
+`<Slug>_<NN>_<SectionName>`. Render exactly the scene(s) holding the beats being
+worked on:
+
+```bash
+uv run manim-slides render decks/<slug>/out/<slug>_scenes.py <TheOneScene> -ql
+uv run manim-slides present <TheOneScene>
+```
+
+Then **tell the user where the part lives**: which scene class, which beat ids
+it contains, and the path to the rendered output — so their next instruction
+can name the beat instead of describing the slide.
+
+**If even the focused render's ETA is too long, optimize the cost instead of
+waiting it out.** The usual culprit is an image (check `assets/raw/` for
+anything the normalizer missed — GIFs, videos, `assets/built/`), a `raw` beat
+doing heavy work, or `--disable_caching` left on from an earlier library
+change. Find which it is, shrink it, then render. A long wait accepted silently
+becomes the cost of every iteration after it.
 
 ## Present
 

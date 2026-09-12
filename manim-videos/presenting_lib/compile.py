@@ -19,10 +19,13 @@ accent whose meaning has not been decided. See `validate` and plan §11.1.
 
 from __future__ import annotations
 
+import os
+
 import re
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 
+from . import assets
 from .chrome import BARE, Chrome, DeckMeta, FULL, NONE
 from .errors import PresentingError
 from .layouts import Content, get_layout
@@ -629,8 +632,24 @@ class DeckSceneBase:
         run_beats(self, deck, self.beat_ids, deck_dir=Path(self.deck_path).parent)
 
 
+def _apply_reversing_preference() -> None:
+    """Let a render opt out of manim-slides' reversed-animation pass.
+
+    Reversing costs about as much again as the animation itself — 25-30s per
+    slide at 2K — and it buys only animated *backward* navigation. Set
+    PRESENTING_SKIP_REVERSING=1 when the deck is needed sooner than that;
+    stepping back then jumps instead of animating.
+    """
+    if os.environ.get("PRESENTING_SKIP_REVERSING") != "1":
+        return
+    from manim_slides.slide.base import BaseSlide
+
+    BaseSlide.skip_reversing = True
+
+
 def make_scene_bases():
     """Built lazily so importing this module does not require a manim renderer."""
+    _apply_reversing_preference()
     from manim import ThreeDScene
     from manim_slides import Slide, ThreeDSlide
 
@@ -742,7 +761,9 @@ def compile_deck(screenplay_path: Path | str, out_path: Path | str,
     screenplay_path = Path(screenplay_path).resolve()
     out_path = Path(out_path).resolve()
     deck = load(screenplay_path)
-    findings = validate(deck)
+    findings = [Finding("note", "", f"downscaled {d}")
+                for d in assets.normalize_images(screenplay_path.parent)]
+    findings += validate(deck)
     if strict:
         raise_on_errors(findings)
     groups = scene_groups(deck)
