@@ -26,5 +26,4 @@ Do not edit `old/motion-canvas/` unless the user explicitly asks.
 ## Guardrails
 
 - Keep edits inside `manim-videos/` unless the task is specifically about the plugin or skills.
-- Treat `main.py` and `rule_to_python.py` as older experiments. If a render failure only affects those files, do not assume the environment is broken.
 - When validating the setup itself, prefer `scenes/title_card.py:TitleCard` because it is meant to be a known-good smoke test.

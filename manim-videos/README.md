@@ -63,5 +63,3 @@ uv run python scripts/measure_slots.py --calibrate   # the legibility ladder
 - Put new hand-written scenes under `scenes/`. Pipeline decks go in `decks/`.
 - Positioning belongs in `presenting_lib/layouts/`, never in a generated scene
   file — those are overwritten on every compile.
-- `main.py` and `rule_to_python.py` are older experiments and may need cleanup
-  before they render on the current Manim version.
