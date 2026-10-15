@@ -27,7 +27,8 @@ The second datavis class for this group. The first was a very small seaborn clas
 ## Series
 Part 2 of the datavis classes. Part 1 was the notebook data_vis.ipynb in ds_be_like (seaborn: line, bar, heatmap, scatter with hue, regplot, lmplot, swarm, KDE, jointplot, histplot); don't re-teach those. The same group also gets the folium + geopandas class (deck geo-folium).
 Format: a 4-hour class. Lecture blocks on these slides alternate with hands-on work in a companion notebook (exercise + solution), with breaks. One "fix this chart" exercise in pairs (~10 min).
-Pending: which toolbox charts and which misleading-chart tricks go in; the presenter picks from decks/datavis-2/gallery/.
+Picked from decks/datavis-2/gallery/: principles B1–B8; toolbox A2 violin/raincloud, D1–D10 and D14 (box, grouped bar, stacked/100% bar, pie/donut, area, bubble, pair plot, correlation heatmap, error bars/CI, count plot, FacetGrid small multiples) and E1 confusion matrix.
+Misleading charts: C1 truncated y-axis, C2 dual axes, C4 cherry-picked window, C7 mean vs median, C8 Simpson's paradox, C9 spurious correlation, C10 survivorship bias; C11 base-rate neglect, C12 colour scale and C13 log scale as backup.
 
 ## Out of scope
 - the Digimon dataset from part 1 ("ignore completely the digimon dataset choose anything else")

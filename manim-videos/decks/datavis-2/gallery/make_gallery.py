@@ -1,16 +1,21 @@
 """Reproducible gallery generator for the datavis-2 class.
 
-Draws one sample per chart type (section A), one before/after pair per
-charting principle (section B), and one misleading/honest pair per
-"how to lie with charts" trick (section C). Also writes one contact-sheet
-PNG per section and the `gallery.md` text that describes every sample.
+Draws one sample per chart type (section A, trimmed to the user's picks —
+see PICKED_SO_FAR below), one before/after pair per charting principle
+(section B), one misleading/honest pair per "how to lie with charts" trick
+(section C, also trimmed), one sample each of the standard "well-known"
+charts part 1 didn't cover (section D), and one sample each of charts the
+audience already meets in ML work (section E, needs a small sklearn model).
+Also writes one contact-sheet PNG per section and the `gallery.md` text
+that describes every sample.
 
 Run it with an ephemeral environment (no project dependency on seaborn,
-pandas, scipy, squarify or pywaffle is added anywhere else in the repo):
+pandas, scipy, squarify, pywaffle or scikit-learn is added anywhere else in
+the repo):
 
     uv run --no-project \
         --with seaborn --with matplotlib --with pandas --with scipy \
-        --with squarify --with pywaffle \
+        --with squarify --with pywaffle --with scikit-learn \
         python make_gallery.py
 
 Needs network access: several datasets are fetched on the fly via
@@ -22,8 +27,11 @@ and keeping a cache in sync (see brief: cache only if it keeps the total
 under 2 MB).
 
 Extra libraries beyond seaborn/matplotlib/pandas/scipy, and why:
-  - squarify  — treemap (A, item 10). No treemap in seaborn/matplotlib.
-  - pywaffle  — waffle chart (A, item 9). No waffle chart in seaborn/matplotlib.
+  - squarify     — treemap (A, item 10). No treemap in seaborn/matplotlib.
+  - pywaffle     — waffle chart (A, item 9). No waffle chart in seaborn/matplotlib.
+  - scikit-learn — every chart in section E (confusion matrix, ROC/PR,
+    feature importance, learning curve, residuals) needs a fitted model;
+    nothing in seaborn/matplotlib/pandas/scipy fits one.
 No other chart needed anything beyond seaborn/matplotlib/pandas/scipy
 (sankey uses matplotlib's own `matplotlib.sankey.Sankey`; parallel
 coordinates uses `pandas.plotting.parallel_coordinates`).
@@ -145,7 +153,49 @@ DATASET_SOURCES = {
         "Mangel & Samaniego, 'Abraham Wald's Work on Aircraft Survivability', JASA 1984) — "
         "point positions are illustrative, not measured"
     ),
+    "budget_walk": (
+        "synthetic, illustrative only — a generic small-project budget walk "
+        "(start, a grant, two cost lines, remaining balance), used purely to "
+        "show the shape of a waterfall chart; no real budget exists behind it"
+    ),
 }
+
+# Round 3: the user picked from sections A and C after seeing the first two
+# rounds. This is a one-time editorial record, not derived from the chart
+# functions below — kept as plain text so "Picked so far" in gallery.md
+# always matches what was actually decided, not just what still renders.
+PICKED_SO_FAR = """\
+**The user's picks, verbatim:**
+> For c: we can ignore the area one, the cumulative, the 3d, binning tricks, and what
+> else gets too much. for a: I prefer to show just the violin. ignore the ECDF, slope,
+> dumbell, hexbin, bump chart, waffle, sankey, calendar heatmap, lolipop, I was expecting
+> some other more well known charts, like you didnt even actually put the more normal
+> charts (other then the basics)
+
+> Except pareto, waterfall and radar we are fine for D. Except the confusion matrix lets
+> ignore the ones from E.
+
+**Final picks, as of round 3:**
+- **A (chart toolbox):** only A2 (violin/raincloud). Everything else in A is
+  dropped — still rendered below and marked **(dropped)**, not deleted.
+- **B (principles):** all 8 — B1 through B8.
+- **C (how to lie), main (7):** C1 truncated y-axis, C2 dual axes, C4
+  cherry-picked window, C7 mean vs. median, C8 Simpson's paradox, C9 spurious
+  correlation, C10 survivorship bias.
+- **C, backup (3):** C11 base-rate neglect, C12 colour scale, C13 log scale.
+- **C, dropped (4):** C3 area/pictogram scaling, C5 cumulative vs. per-period, C6 3D
+  pie, C14 binning tricks.
+- **D (well-known charts):** D1 through D10, and D14 — box/violin/strip, grouped bar,
+  stacked/100% stacked bar, pie/donut, area/stacked area, bubble, pair plot,
+  correlation heatmap, error bars/CI, count plot, and FacetGrid small multiples.
+  **Dropped (3):** D11 radar, D12 Pareto, D13 waterfall.
+- **E (charts ML already uses):** only E1, confusion matrix. **Dropped (4):** E2
+  ROC/PR, E3 feature importance, E4 learning curve, E5 residual plot.
+
+Everything picked across A-E is the candidate set for the screenplay; the presenter
+still chooses the final beats from this set (brief, "pending" field).
+"""
+
 
 # --------------------------------------------------------------------------
 # Section A — chart toolbox
@@ -948,6 +998,461 @@ SECTION_C = [
      "Too few or oddly-placed histogram bins can hide real structure (like Old Faithful's two distinct eruption types) or invent structure that isn't there. Spot it by re-drawing with a different bin count/width and checking whether the shape survives; the honest version picks bins fine enough to show real structure (or uses an ECDF/KDE instead)."),
 ]
 
+# Round 3: items the user picked from sections A and C. "dropped" items are
+# still rendered and described below — PICKED_SO_FAR and the gallery.md tag
+# are the record of the decision, not a reason to stop drawing them.
+STATUS_A = {key: ("" if key == "a02_raincloud" else "dropped") for key, *_ in SECTION_A}
+STATUS_C = {
+    "c01_truncated_axis": "", "c02_dual_axes": "", "c04_cherry_picked_window": "",
+    "c07_mean_median": "", "c08_simpsons_paradox": "", "c09_spurious_correlation": "",
+    "c10_survivorship_bias": "",
+    "c11_base_rate_neglect": "backup", "c12_misleading_colour_scale": "backup",
+    "c13_log_scale": "backup",
+    "c03_area_scaling": "dropped", "c05_cumulative_vs_period": "dropped",
+    "c06_3d_pie": "dropped", "c14_binning_tricks": "dropped",
+}
+
+
+# --------------------------------------------------------------------------
+# Section D — well-known charts (standard ones part 1 didn't cover)
+# --------------------------------------------------------------------------
+
+
+def d_box_violin_strip() -> plt.Figure:
+    fig, axes = plt.subplots(1, 3, figsize=FIGSIZE, dpi=DPI, sharey=True)
+    order = sorted(penguins["species"].unique())
+    sns.boxplot(penguins, x="species", y="bill_length_mm", order=order, ax=axes[0], color="#CFC6AE")
+    axes[0].set_title("Box", fontsize=13)
+    sns.violinplot(penguins, x="species", y="bill_length_mm", order=order, ax=axes[1], color="#CFC6AE")
+    axes[1].set_title("Violin", fontsize=13)
+    sns.stripplot(penguins, x="species", y="bill_length_mm", order=order, ax=axes[2], size=2.5, alpha=0.5, color=INK)
+    axes[2].set_title("Strip", fontsize=13)
+    for ax in axes[1:]:
+        ax.set_ylabel("")
+    fig.suptitle("Box vs. violin vs. strip — same data, three views", fontsize=14)
+    fig.tight_layout(rect=(0, 0, 1, 0.92))
+    return fig
+
+
+def d_grouped_bar() -> plt.Figure:
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    sns.barplot(penguins, x="species", y="body_mass_g", hue="sex", ax=ax,
+                palette={"Male": ACCENT_GREEN, "Female": ACCENT_YELLOW})
+    ax.set_ylabel("mean body mass (g)")
+    ax.set_title("Grouped bar — body mass by species and sex")
+    fig.tight_layout()
+    return fig
+
+
+def d_stacked_bar() -> plt.Figure:
+    fig, ax1, ax2 = pair_fig("Stacked bar and 100% stacked bar")
+    ct = pd.crosstab(titanic["class"], titanic["survived"])
+    ct.columns = ["died", "survived"]
+    ct.plot(kind="bar", stacked=True, ax=ax1, color=[BAD_RED, ACCENT_GREEN], legend=False)
+    ax1.set_title("Stacked bar — counts", fontsize=12.5)
+    ax1.set_xlabel(""); ax1.tick_params(axis="x", rotation=0)
+    pct = ct.div(ct.sum(axis=1), axis=0) * 100
+    pct.plot(kind="bar", stacked=True, ax=ax2, color=[BAD_RED, ACCENT_GREEN], legend=False)
+    ax2.set_title("100% stacked — share", fontsize=12.5)
+    ax2.set_xlabel(""); ax2.tick_params(axis="x", rotation=0)
+    # Every bar in the 100% panel reaches the top, so there's no free space
+    # inside either axes for a legend — one shared legend below both instead.
+    handles = [plt.Rectangle((0, 0), 1, 1, color=c) for c in (BAD_RED, ACCENT_GREEN)]
+    fig.subplots_adjust(bottom=0.24)
+    fig.legend(handles, ["died", "survived"], loc="lower center", ncol=2,
+               bbox_to_anchor=(0.5, 0.0), fontsize=10.5, frameon=False)
+    return fig
+
+
+def d_pie_donut() -> plt.Figure:
+    fig, ax1, ax2 = pair_fig("Pie / donut — fine at a few parts, unreadable at many")
+    counts3 = titanic["class"].value_counts()
+    ax1.pie(counts3.values, labels=counts3.index, autopct="%1.0f%%",
+            colors=sns.color_palette("colorblind", len(counts3)), wedgeprops={"width": 0.4})
+    ax1.set_title("Fine: 3 parts (donut)", fontsize=12.5)
+    counts8 = diamonds["clarity"].value_counts()
+    ax2.pie(counts8.values, labels=counts8.index, autopct="%1.0f%%",
+            colors=sns.color_palette("flare", len(counts8)), wedgeprops={"width": 0.4})
+    ax2.set_title("Not fine: 8 parts (donut)", fontsize=12.5)
+    return fig
+
+
+def d_area() -> plt.Figure:
+    fig, ax1, ax2 = pair_fig("Area and stacked area")
+    total = flights.groupby("year")["passengers"].sum()
+    ax1.fill_between(total.index, total.values, color=ACCENT_GREEN, alpha=0.6)
+    ax1.plot(total.index, total.values, color=ACCENT_GREEN)
+    ax1.set_title("Area — total passengers/year", fontsize=12.5)
+    # Countries are sampled on different, irregular years (e.g. Canada has no
+    # 1970 row, France skips most of the 1970s/80s) — pivoting straight to a
+    # stackplot leaves NaN gaps that render as spurious vertical spikes.
+    # Interpolating each country's own series onto the full year range first
+    # gives a smooth, honest composition-over-time read instead.
+    piv = healthexp.pivot(index="Year", columns="Country", values="Spending_USD")
+    piv = piv.reindex(range(piv.index.min(), piv.index.max() + 1)).interpolate(
+        method="linear", limit_direction="both")
+    ax2.stackplot(piv.index, piv.T.values, labels=piv.columns,
+                  colors=sns.color_palette("colorblind", piv.shape[1]))
+    ax2.legend(fontsize=7.5, loc="upper left")
+    ax2.set_title("Stacked area — spending by country", fontsize=12.5)
+    return fig
+
+
+def d_bubble() -> plt.Figure:
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    sns.scatterplot(penguins, x="bill_length_mm", y="flipper_length_mm", size="body_mass_g",
+                     hue="species", sizes=(20, 300), alpha=0.7, ax=ax,
+                     palette=dict(zip(sorted(penguins["species"].unique()), sns.color_palette("colorblind", 3))))
+    ax.legend(fontsize=8, loc="lower right", ncol=2)
+    ax.set_title("Bubble chart — bill length vs. flipper length,\nsize = body mass")
+    fig.tight_layout()
+    return fig
+
+
+def d_pairplot() -> plt.Figure:
+    g = sns.pairplot(penguins, vars=["bill_length_mm", "flipper_length_mm", "body_mass_g"],
+                      hue="species", palette=dict(zip(sorted(penguins["species"].unique()),
+                                                       sns.color_palette("colorblind", 3))),
+                      plot_kws={"s": 12, "alpha": 0.6}, height=1.5)
+    g.figure.suptitle("Pair plot — three penguin measurements", fontsize=13, y=1.02)
+    g.figure.set_size_inches(*FIGSIZE)
+    g.figure.set_dpi(DPI)
+    for ax in g.figure.axes:
+        ax.tick_params(labelsize=7)
+        ax.xaxis.label.set_size(8)
+        ax.yaxis.label.set_size(8)
+    if g.legend is not None:
+        plt.setp(g.legend.get_texts(), fontsize=9)
+        if g.legend.get_title() is not None:
+            g.legend.get_title().set_fontsize(10)
+    return g.figure
+
+
+def d_corr_heatmap() -> plt.Figure:
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    corr = diamonds[["carat", "depth", "table", "price"]].corr()
+    mask = np.triu(np.ones_like(corr, dtype=bool), k=1)
+    sns.heatmap(corr, mask=mask, cmap="coolwarm", vmin=-1, vmax=1, center=0, annot=True, fmt=".2f",
+                square=True, ax=ax, cbar_kws={"label": "Pearson r"})
+    ax.set_title("Correlation matrix — annotated, diverging,\nupper triangle masked")
+    fig.tight_layout()
+    return fig
+
+
+def d_error_bars() -> plt.Figure:
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    order = sorted(penguins["species"].unique())
+    sns.pointplot(penguins, x="species", y="body_mass_g", order=order, errorbar=("ci", 95),
+                  ax=ax, color=ACCENT_GREEN, capsize=0.15)
+    ax.set_ylabel("mean body mass (g), 95% CI")
+    ax.set_title("Error bars — the bars are a 95% CI,\nnot the full spread of the data")
+    fig.tight_layout()
+    return fig
+
+
+def d_count_plot() -> plt.Figure:
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    sns.countplot(titanic, x="class", hue="survived", ax=ax,
+                  palette={0: BAD_RED, 1: ACCENT_GREEN}, order=["First", "Second", "Third"])
+    handles, _ = ax.get_legend_handles_labels()
+    ax.legend(handles, ["died", "survived"], title="")
+    ax.set_title("Count plot — passengers per class")
+    fig.tight_layout()
+    return fig
+
+
+def d_radar() -> plt.Figure:
+    fig = plt.figure(figsize=FIGSIZE, dpi=DPI)
+    ax = fig.add_subplot(1, 1, 1, polar=True)
+    cols = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
+    norm = penguins[cols].apply(lambda c: (c - c.min()) / (c.max() - c.min()))
+    norm["species"] = penguins["species"]
+    means = norm.groupby("species", observed=True)[cols].mean()
+    angles = np.linspace(0, 2 * np.pi, len(cols), endpoint=False).tolist()
+    angles += angles[:1]
+    colors = sns.color_palette("colorblind", len(means))
+    for (species, row), color in zip(means.iterrows(), colors):
+        vals = row.tolist() + row.tolist()[:1]
+        ax.plot(angles, vals, color=color, label=species)
+        ax.fill(angles, vals, color=color, alpha=0.15)
+    ax.set_xticks(angles[:-1])
+    ax.set_xticklabels(["bill length", "bill depth", "flipper length", "body mass"], fontsize=9)
+    ax.tick_params(axis="x", pad=14)  # otherwise the left-hand spoke label clips against the frame
+    ax.set_yticklabels([])
+    ax.legend(loc="upper right", bbox_to_anchor=(1.3, 1.1), fontsize=9)
+    ax.set_title("Radar / spider — four measurements,\nnormalised 0-1, by species", y=1.2)
+    fig.subplots_adjust(left=0.12, right=0.82, top=0.78)
+    return fig
+
+
+def d_pareto() -> plt.Figure:
+    fig, ax1 = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    counts = diamonds["clarity"].value_counts().sort_values(ascending=False)
+    cum_pct = counts.cumsum() / counts.sum() * 100
+    ax1.bar(counts.index, counts.values, color=ACCENT_GREEN)
+    ax1.set_ylabel("count")
+    ax2 = ax1.twinx()
+    ax2.plot(counts.index, cum_pct.values, color=BAD_RED, marker="o")
+    ax2.axhline(80, color=BAD_RED, linestyle=":", linewidth=1)
+    ax2.set_ylabel("cumulative %", color=BAD_RED)
+    ax2.set_ylim(0, 105)
+    ax1.set_title("Pareto chart — diamonds by clarity grade,\nsorted bars + cumulative %")
+    fig.tight_layout()
+    return fig
+
+
+def d_waterfall() -> plt.Figure:
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    labels = ["Start", "+ Grant", "- Equipment", "- Staff time", "End"]
+    values = [2000, 1500, -800, -1200, None]
+    running = 2000
+    bottoms, heights, colors = [0], [2000], [MUTED]
+    for v in values[1:-1]:
+        if v >= 0:
+            bottoms.append(running); heights.append(v); colors.append(ACCENT_GREEN)
+        else:
+            running += v
+            bottoms.append(running); heights.append(-v); colors.append(BAD_RED)
+        running = bottoms[-1] + heights[-1] if v >= 0 else running
+    running = 2000 + 1500 - 800 - 1200
+    bottoms.append(0); heights.append(running); colors.append(MUTED)
+    ax.bar(labels, heights, bottom=bottoms, color=colors)
+    for x, (b, h) in enumerate(zip(bottoms, heights)):
+        ax.text(x, b + h + 40, f"{b + h if x in (0, 4) else h:,.0f}", ha="center", fontsize=10)
+    ax.set_ylabel("budget (synthetic units)")
+    ax.set_title("Waterfall — a budget walk (synthetic, illustrative only)")
+    fig.tight_layout()
+    return fig
+
+
+def d_facetgrid_small_multiples() -> plt.Figure:
+    g = sns.catplot(data=penguins, x="species", y="body_mass_g", col="island", kind="box",
+                     color="#CFC6AE", height=2.2, aspect=0.85)
+    g.set_titles("{col_name}")
+    g.figure.set_size_inches(*FIGSIZE)
+    g.figure.set_dpi(DPI)
+    for ax in g.figure.axes:
+        ax.tick_params(labelsize=9)
+        ax.xaxis.label.set_size(10)
+        ax.yaxis.label.set_size(10)
+        ax.title.set_size(13)
+    g.figure.subplots_adjust(top=0.82)
+    g.figure.suptitle("Small multiples the seaborn way — catplot(col=...)", fontsize=13, y=0.98)
+    return g.figure
+
+
+SECTION_D = [
+    ("d01_box_violin_strip", "Box vs. violin vs. strip", d_box_violin_strip, True, None,
+     "Three ways to draw the same distribution: a box (quartiles only), a violin (full shape via KDE), a strip (every raw point).",
+     "Answers 'what does this distribution look like' at three levels of detail — box for a quick comparison, violin for shape, strip for seeing the actual n and any gaps/clusters.",
+     "Don't use a box alone when the shape matters (it can hide bimodality); don't use a strip alone with large n (overplots).",
+     "`sns.boxplot(...)`, `sns.violinplot(...)`, `sns.stripplot(...)` — three calls, same `x=`/`y=`"),
+    ("d02_grouped_bar", "Grouped bar", d_grouped_bar, True, None,
+     "Bars for one category, grouped side by side by a second category.",
+     "Answers 'how does the value compare across two categorical dimensions at once' — e.g. a metric by group and by sub-group.",
+     "Don't use with more than ~3-4 sub-groups per cluster or many categories — the clusters get wide and hard to compare.",
+     "`sns.barplot(df, x=.., y=.., hue=..)`"),
+    ("d03_stacked_bar", "Stacked bar + 100% stacked bar", d_stacked_bar, True, None,
+     "A bar split into coloured segments by a second category; the 100% version rescales every bar to the same height so segments show share, not raw total.",
+     "Stacked: answers 'what's the total, and its composition'. 100% stacked: answers 'what share does each part hold', comparable across categories with very different totals.",
+     "Don't use stacked (non-100%) when the audience needs to compare a middle segment across bars — only the bottom segment and the total are easy to compare.",
+     "`pandas` `crosstab(...).plot(kind='bar', stacked=True)`, or `df.div(df.sum(axis=1), axis=0)` first for the 100% version"),
+    ("d04_pie_donut", "Pie / donut", d_pie_donut, False, None,
+     "A circle split into wedges (or a ring, for donut) sized by share of the whole.",
+     "Answers 'what share of the whole does each part hold' — genuinely fine at 2-3 parts, where the comparison is obvious at a glance.",
+     "Don't use past ~4-5 parts (this sample's 8-part version is already hard to rank by eye — see Cleveland's ranking, principle B2); use a bar instead.",
+     "`ax.pie(values, labels=.., wedgeprops={'width': 0.4})` (the `width` makes it a donut; omit for a plain pie)"),
+    ("d05_area", "Area and stacked area", d_area, False, None,
+     "A line chart with the area under it filled; stacked area layers several filled series so the top line is their running total.",
+     "Plain area: emphasises magnitude/volume over time more than a bare line. Stacked area: answers 'how does the total, and each part's contribution to it, change over time'.",
+     "Don't use stacked area with more than ~5-6 series (the bands become hard to read individually) or with series that cross zero.",
+     "`ax.fill_between(x, y)` for plain area; `ax.stackplot(x, *series, labels=..)` for stacked"),
+    ("d06_bubble", "Bubble chart", d_bubble, True, None,
+     "A scatter plot with a third continuous variable mapped to point size (and often a fourth to colour).",
+     "Answers 'how do three (or four) variables relate at once' for individual points — e.g. two measurements plus a magnitude.",
+     "Don't use when the size differences are subtle (hard to compare area by eye — Cleveland again) or with too many overlapping points.",
+     "`sns.scatterplot(df, x=.., y=.., size=.., hue=.., sizes=(min,max))`"),
+    ("d07_pairplot", "Pair plot", d_pairplot, False, None,
+     "A grid of scatter plots for every pair of chosen variables, with each variable's own distribution on the diagonal.",
+     "Answers 'how does every variable relate to every other one' in a single exploratory view — the first thing to run on a new numeric dataset.",
+     "Don't use with more than ~5-6 variables (the grid gets too small per panel to read) or for a polished final slide — it's an exploration tool, not a takeaway chart.",
+     "`sns.pairplot(df, vars=[...], hue=..)`"),
+    ("d08_corr_heatmap", "Correlation-matrix heatmap", d_corr_heatmap, True, None,
+     "A heatmap of pairwise correlation coefficients, with a diverging colour scale centred on zero, annotated values, and the redundant upper triangle masked out.",
+     "Answers 'which variables move together, and how strongly' across many variables at once, faster than scanning a pair plot.",
+     "Don't use a sequential colormap here (correlation is signed, -1 to 1 — needs diverging, see principle B4) or skip the mask (the matrix is symmetric; showing both triangles doubles the ink for no new information).",
+     "`sns.heatmap(df.corr(), mask=np.triu(...), cmap='coolwarm', center=0, annot=True)`"),
+    ("d09_error_bars", "Error bars / confidence intervals", d_error_bars, True, None,
+     "A point or bar estimate (here, a mean) with a line through it marking a confidence interval — the range the true value plausibly falls in, not the spread of the raw data.",
+     "Answers 'how sure are we about this estimate' — whether two groups' CIs overlap is a quick, honest check for whether a difference is likely real.",
+     "Don't present a bar/point estimate without some error indicator when the audience might compare groups — and don't label the interval as 'the data's spread' (it isn't; that's a box/violin's job).",
+     "`sns.pointplot(df, x=.., y=.., errorbar=('ci', 95))`, or `sns.barplot(..., errorbar=...)`"),
+    ("d10_count_plot", "Count plot", d_count_plot, False, None,
+     "A bar chart where the bar height is just the count of rows in each category — seaborn builds the tally for you.",
+     "Answers 'how many of each category are there' straight from raw rows, without a manual `.value_counts()` first.",
+     "Don't use when the quantity of interest isn't a row count (use `barplot` with an explicit `y=` for a computed statistic instead).",
+     "`sns.countplot(df, x=.., hue=..)`"),
+    ("d11_radar", "Radar / spider chart", d_radar, False, None,
+     "Several normalised variables plotted as spokes around a circle, one polygon per entity.",
+     "Answers 'how does this entity's profile compare across several variables at once' — popular for comparing a handful of named things (players, products, species).",
+     "Don't use with more than ~6-8 spokes (hard to read) or more than ~4-5 overlaid entities (the polygons occlude each other); and never to compare magnitude precisely — spoke length is easy to misjudge.",
+     "No seaborn/matplotlib radar primitive — build with `fig.add_subplot(polar=True)`, `ax.plot`/`ax.fill` on angles from `np.linspace(0, 2*pi, n, endpoint=False)`"),
+    ("d12_pareto", "Pareto chart", d_pareto, True, None,
+     "Bars sorted largest to smallest, with a line tracking the cumulative percentage of the total as you move left to right.",
+     "Answers the classic 80/20 question: 'how many categories account for most of the total' — where the cumulative line crosses 80% is the answer.",
+     "Don't use when the categories have a natural order that isn't by size (e.g. time periods) — sorting breaks that order and the chart stops answering a real question.",
+     "`ax.bar(sorted_counts)` + `ax.twinx().plot(cumulative_pct)` — no single seaborn/matplotlib call does both"),
+    ("d13_waterfall", "Waterfall chart", d_waterfall, False, None,
+     "A bar chart where each bar starts where the running total left off, so positive and negative steps visibly build up to (or draw down from) a final total.",
+     "Answers 'what added to, and what subtracted from, this total, and by how much' — a budget, a bridge from one period's number to the next.",
+     "Don't use when the steps aren't genuinely additive (they must sum to the start/end values) or there are more than ~6-8 steps (the bridge gets hard to follow).",
+     "`ax.bar(labels, heights, bottom=running_totals)` — no seaborn/matplotlib waterfall primitive"),
+    ("d14_facetgrid", "Small multiples via FacetGrid/catplot", d_facetgrid_small_multiples, False, None,
+     "The seaborn-native way to build small multiples: pass `col=` (and/or `row=`) to a figure-level function and it builds the grid, shared axes, and legend for you.",
+     "Same question as A1's small multiples (compare many groups at once) — this is the idiomatic seaborn call instead of a hand-rolled `plt.subplots` loop.",
+     "Don't reach for this over a hand-built grid when you need per-panel customisation the figure-level API doesn't expose (different chart types per panel, custom per-panel annotation).",
+     "`sns.catplot(df, x=.., y=.., col=.., kind='box')`, or `sns.displot(..., col=..)` for distributions"),
+]
+
+
+# --------------------------------------------------------------------------
+# Section E — charts ML people already use
+# --------------------------------------------------------------------------
+#
+# Every chart here fits a small model first (sklearn), purely to have real
+# predictions/residuals to plot — the point is the chart, not the model, so
+# each one uses the simplest classifier/regressor that gets there and refits
+# independently rather than sharing state across functions.
+
+
+def e_confusion_matrix() -> plt.Figure:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.metrics import confusion_matrix
+    from sklearn.model_selection import train_test_split
+
+    features = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
+    X, y = penguins[features], penguins["species"]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+    clf = RandomForestClassifier(n_estimators=200, random_state=0).fit(X_train, y_train)
+    labels = sorted(y.unique())
+    cm = confusion_matrix(y_test, clf.predict(X_test), labels=labels)
+    cm_norm = cm / cm.sum(axis=1, keepdims=True)
+    fig, ax1, ax2 = pair_fig("Confusion matrix — penguin species classifier (held-out test set)")
+    sns.heatmap(cm, annot=True, fmt="d", cmap="viridis", xticklabels=labels, yticklabels=labels, ax=ax1, cbar=False)
+    ax1.set_xlabel("predicted"); ax1.set_ylabel("true"); ax1.set_title("Counts", fontsize=12.5)
+    sns.heatmap(cm_norm, annot=True, fmt=".2f", cmap="viridis", xticklabels=labels, yticklabels=labels, ax=ax2,
+                cbar=False, vmin=0, vmax=1)
+    ax2.set_xlabel("predicted"); ax2.set_ylabel(""); ax2.set_title("Normalised (row %)", fontsize=12.5)
+    return fig
+
+
+def e_roc_pr() -> plt.Figure:
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.metrics import auc, average_precision_score, precision_recall_curve, roc_curve
+    from sklearn.model_selection import train_test_split
+
+    cols = ["pclass", "age", "fare", "sibsp", "parch"]
+    df = titanic.dropna(subset=[*cols, "survived"])
+    X, y = df[cols], df["survived"]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, stratify=y, random_state=0)
+    clf = LogisticRegression(max_iter=1000).fit(X_train, y_train)
+    proba = clf.predict_proba(X_test)[:, 1]
+    fpr, tpr, _ = roc_curve(y_test, proba)
+    roc_auc = auc(fpr, tpr)
+    prec, rec, _ = precision_recall_curve(y_test, proba)
+    ap = average_precision_score(y_test, proba)
+    fig, ax1, ax2 = pair_fig("ROC and precision-recall — Titanic survival classifier")
+    ax1.plot(fpr, tpr, color=ACCENT_GREEN)
+    ax1.plot([0, 1], [0, 1], color=MUTED, linestyle="--", linewidth=1)
+    ax1.set_xlabel("false positive rate"); ax1.set_ylabel("true positive rate")
+    ax1.set_title(f"ROC (AUC = {roc_auc:.2f})", fontsize=12.5)
+    ax2.plot(rec, prec, color=ACCENT_YELLOW)
+    ax2.set_xlabel("recall"); ax2.set_ylabel("precision")
+    ax2.set_title(f"Precision-recall (AP = {ap:.2f})", fontsize=12.5)
+    return fig
+
+
+def e_feature_importance() -> plt.Figure:
+    from sklearn.ensemble import RandomForestClassifier
+
+    features = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
+    X, y = penguins[features], penguins["species"]
+    clf = RandomForestClassifier(n_estimators=200, random_state=0).fit(X, y)
+    importances = pd.Series(clf.feature_importances_, index=features).sort_values()
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    ax.barh(importances.index, importances.values, color=ACCENT_GREEN)
+    ax.set_xlabel("importance (mean decrease in impurity)")
+    ax.set_title("Feature importance — penguin species classifier")
+    fig.tight_layout()
+    return fig
+
+
+def e_learning_curve() -> plt.Figure:
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.model_selection import learning_curve
+
+    features = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"]
+    X, y = penguins[features], penguins["species"]
+    train_sizes, train_scores, val_scores = learning_curve(
+        RandomForestClassifier(n_estimators=100, random_state=0), X, y,
+        train_sizes=np.linspace(0.1, 1.0, 8), cv=5, random_state=0,
+    )
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    ax.plot(train_sizes, train_scores.mean(axis=1), marker="o", color=ACCENT_GREEN, label="train")
+    ax.plot(train_sizes, val_scores.mean(axis=1), marker="o", color=ACCENT_YELLOW, label="validation")
+    ax.set_xlabel("training set size")
+    ax.set_ylabel("accuracy")
+    ax.set_ylim(0, 1.05)
+    ax.legend()
+    ax.set_title("Learning curve — penguin species classifier")
+    fig.tight_layout()
+    return fig
+
+
+def e_residuals() -> plt.Figure:
+    from sklearn.linear_model import LinearRegression
+
+    X, y = diamonds_sample[["carat"]], diamonds_sample["price"]
+    reg = LinearRegression().fit(X, y)
+    resid = y - reg.predict(X)
+    fig, ax = plt.subplots(figsize=FIGSIZE, dpi=DPI)
+    ax.scatter(reg.predict(X), resid, s=8, alpha=0.4, color=MUTED)
+    ax.axhline(0, color=BAD_RED, linewidth=1.5)
+    ax.set_xlabel("predicted price (USD)")
+    ax.set_ylabel("residual (actual - predicted)")
+    ax.set_title("Residual plot — price ~ carat (linear fit)\nfan shape: variance grows with price")
+    fig.tight_layout()
+    return fig
+
+
+SECTION_E = [
+    ("e01_confusion_matrix", "Confusion matrix", e_confusion_matrix, True, "scikit-learn",
+     "A grid of predicted class vs. true class counts (or row-normalised rates) for a classifier.",
+     "Answers 'which classes does the model actually confuse with which' — far more specific than a single accuracy number.",
+     "Don't read counts alone when classes are imbalanced (a few errors on a rare class can be a bigger problem than many on a common one) — check the normalised version too.",
+     "`sklearn.metrics.confusion_matrix(y_true, y_pred)`, plotted with `sns.heatmap(cm, annot=True)`"),
+    ("e02_roc_pr", "ROC and precision-recall curves", e_roc_pr, True, "scikit-learn",
+     "ROC plots true- vs. false-positive rate across every classification threshold; precision-recall plots precision vs. recall across the same thresholds.",
+     "Answers 'how good is this classifier across all thresholds, not just the default 0.5' — PR is the one to trust when the positive class is rare.",
+     "Don't use ROC/AUC alone on a strongly imbalanced problem (it can look good even when precision is poor) — check precision-recall too.",
+     "`sklearn.metrics.roc_curve`/`auc`, `precision_recall_curve`/`average_precision_score`"),
+    ("e03_feature_importance", "Feature-importance bar", e_feature_importance, False, "scikit-learn",
+     "A sorted, horizontal bar of how much each input feature contributed to a fitted model's predictions.",
+     "Answers 'what is the model actually using to decide' — a first, rough check before trusting or explaining a model.",
+     "Don't treat built-in importances as a causal explanation, and don't use them to compare models of different types (the scales aren't comparable); consider permutation importance for a fairer comparison.",
+     "`clf.feature_importances_` (tree models), plotted with `ax.barh(sorted_features, sorted_importances)`"),
+    ("e04_learning_curve", "Learning curve", e_learning_curve, False, "scikit-learn",
+     "Train and validation score plotted against training-set size.",
+     "Answers 'would this model improve with more data, or is it already maxed out' — and whether the gap between the two lines signals overfitting.",
+     "Don't run it on a dataset too small to leave a meaningful validation fold, and don't read a single run's noise as a trend — average over folds (as `learning_curve`'s cross-validation already does).",
+     "`sklearn.model_selection.learning_curve(estimator, X, y, train_sizes=.., cv=..)`"),
+    ("e05_residuals", "Residual plot", e_residuals, False, "scikit-learn",
+     "Predicted value on the x-axis, (actual - predicted) on the y-axis, for a fitted regression.",
+     "Answers 'is the model's error random, or is there a pattern left over' — a fan shape, curve, or trend in the residuals means the model is missing something systematic.",
+     "Don't skip this for a regression chart that only shows predicted vs. actual — a residual plot makes a systematic pattern far easier to spot than the same information folded into a 45° scatter.",
+     "`residuals = y_true - model.predict(X)`, plotted with `ax.scatter(model.predict(X), residuals)`"),
+]
+
 
 # --------------------------------------------------------------------------
 # Driver: render every sample, build contact sheets, write gallery.md
@@ -970,8 +1475,10 @@ def build_contact_sheet(section_key: str, entries: list, image_paths: dict, ncol
     for j in range(len(entries), nrows * ncols):
         r, c = divmod(j, ncols)
         axes[r][c].axis("off")
-    fig.suptitle({"A": "Chart toolbox", "B": "Principles (before / after)", "C": "How to lie with charts"}[section_key],
-                 fontsize=18)
+    fig.suptitle({
+        "A": "Chart toolbox", "B": "Principles (before / after)", "C": "How to lie with charts",
+        "D": "Well-known charts", "E": "Charts ML people already use",
+    }[section_key], fontsize=18)
     fig.tight_layout(rect=(0, 0, 1, 0.96))
     path = IMG_DIR / out_name
     fig.savefig(path, dpi=150)
@@ -987,7 +1494,12 @@ def gallery_md_section_a(image_paths: dict) -> str:
     lines = ["## A. Chart toolbox\n",
              "![Chart toolbox contact sheet](images/contact_sheet_a.png)\n"]
     for key, name, _fn, extra, what, question, when_not, call in SECTION_A:
-        flag = f" **(needs `{extra}`, not in seaborn/matplotlib/pandas/scipy)**" if extra else ""
+        tags = []
+        if extra:
+            tags.append(f"needs `{extra}`, not in seaborn/matplotlib/pandas/scipy")
+        if STATUS_A.get(key):
+            tags.append(STATUS_A[key])
+        flag = f" **({'; '.join(tags)})**" if tags else ""
         lines.append(f"### {name}{flag}\n")
         lines.append(f"![{name}](images/{key}.png)\n")
         lines.append(f"- **What it shows:** {what}")
@@ -1011,10 +1523,60 @@ def gallery_md_section_c() -> str:
     lines = ["## C. How to lie with charts (misleading vs. honest)\n",
              "![How-to-lie contact sheet](images/contact_sheet_c.png)\n"]
     for key, name, _fn, desc in SECTION_C:
-        lines.append(f"### {name}\n")
+        status = STATUS_C.get(key)
+        flag = f" **({status})**" if status else ""
+        lines.append(f"### {name}{flag}\n")
         lines.append(f"![{name}](images/{key}.png)\n")
         lines.append(f"{desc}\n")
     return "\n".join(lines)
+
+
+def _gallery_md_toolbox_section(heading: str, contact_sheet: str, entries: list, status: dict) -> str:
+    """Shared renderer for D and E: same (key, name, fn, star, extra, what,
+    question, when_not, call) shape as SECTION_A. `star` was this agent's
+    "teach this one" suggestion before the user picked; the user's actual
+    picks are recorded in `status` instead (see STATUS_D/STATUS_E) and take
+    over the tag shown here."""
+    lines = [f"## {heading}\n", f"![contact sheet]({contact_sheet})\n"]
+    for key, name, _fn, _star, extra, what, question, when_not, call in entries:
+        tags = []
+        if extra:
+            tags.append(f"needs `{extra}`, not in seaborn/matplotlib/pandas/scipy")
+        if status.get(key):
+            tags.append(status[key])
+        flag = f" **({'; '.join(tags)})**" if tags else ""
+        lines.append(f"### {name}{flag}\n")
+        lines.append(f"![{name}](images/{key}.png)\n")
+        lines.append(f"- **What it shows:** {what}")
+        lines.append(f"- **Answers well:** {question}")
+        lines.append(f"- **When not to use it:** {when_not}")
+        lines.append(f"- **Call:** {call}\n")
+    return "\n".join(lines)
+
+
+# Round 3, second pass: the user picked from D and E too, verbatim: "Except
+# pareto, waterfall and radar we are fine for D. Except the confusion matrix
+# lets ignore the ones from E." All of D and E were already drawn by the time
+# this landed, so the dropped ones stay rendered and tagged "(dropped)"
+# (not "(dropped, not drawn)", which is only for a pick that arrives before
+# the corresponding chart is ever generated).
+STATUS_D = {key: ("dropped" if key in ("d11_radar", "d12_pareto", "d13_waterfall") else "")
+            for key, *_ in SECTION_D}
+STATUS_E = {key: ("" if key == "e01_confusion_matrix" else "dropped") for key, *_ in SECTION_E}
+
+
+def gallery_md_section_d() -> str:
+    return _gallery_md_toolbox_section(
+        "D. Well-known charts (not covered in part 1)",
+        "images/contact_sheet_d.png", SECTION_D, STATUS_D,
+    )
+
+
+def gallery_md_section_e() -> str:
+    return _gallery_md_toolbox_section(
+        "E. Charts ML people already use",
+        "images/contact_sheet_e.png", SECTION_E, STATUS_E,
+    )
 
 
 def main() -> None:
@@ -1038,21 +1600,39 @@ def main() -> None:
         image_paths[key] = save(fig, key)
         print(f"  {key}: {name} -> {image_paths[key].name}")
 
+    print("Section D — well-known charts")
+    for key, name, fn, *_ in SECTION_D:
+        fig = fn()
+        image_paths[key] = save(fig, key)
+        print(f"  {key}: {name} -> {image_paths[key].name}")
+
+    print("Section E — charts ML people already use")
+    for key, name, fn, *_ in SECTION_E:
+        fig = fn()
+        image_paths[key] = save(fig, key)
+        print(f"  {key}: {name} -> {image_paths[key].name}")
+
     print("Building contact sheets")
     build_contact_sheet("A", SECTION_A, image_paths, ncols=5, out_name="contact_sheet_a.png")
     build_contact_sheet("B", SECTION_B, image_paths, ncols=4, out_name="contact_sheet_b.png")
     build_contact_sheet("C", SECTION_C, image_paths, ncols=4, out_name="contact_sheet_c.png")
+    build_contact_sheet("D", SECTION_D, image_paths, ncols=5, out_name="contact_sheet_d.png")
+    build_contact_sheet("E", SECTION_E, image_paths, ncols=3, out_name="contact_sheet_e.png")
 
     print("Writing gallery.md")
-    header = textwrap.dedent(f"""\
+    title_and_picks = textwrap.dedent("""\
         # datavis-2 chart gallery
 
+        ## Picked so far
+
+        """) + PICKED_SO_FAR
+    intro = textwrap.dedent(f"""\
         Generated by `make_gallery.py`. Re-run it to regenerate every image and this
         file from scratch:
 
             uv run --no-project \\
                 --with seaborn --with matplotlib --with pandas --with scipy \\
-                --with squarify --with pywaffle \\
+                --with squarify --with pywaffle --with scikit-learn \\
                 python make_gallery.py
 
         Style: {STYLE_NOTE}, with larger fonts applied on top for gallery legibility.
@@ -1065,10 +1645,13 @@ def main() -> None:
         """)
     sources = "\n".join(f"- **{k}** — {v}" for k, v in DATASET_SOURCES.items())
     body = "\n\n".join([
-        header + sources,
+        title_and_picks,
+        intro + sources,
         gallery_md_section_a(image_paths),
         gallery_md_section_b(),
         gallery_md_section_c(),
+        gallery_md_section_d(),
+        gallery_md_section_e(),
     ])
     (HERE / "gallery.md").write_text(body + "\n")
     print("Done.")
