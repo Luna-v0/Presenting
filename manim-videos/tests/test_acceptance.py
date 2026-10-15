@@ -505,6 +505,41 @@ def test_moving_a_beat_is_not_an_edit(tmp_deck):
     assert not beat.edited_by_hand()
 
 
+# ── 19. Builder visuals are not placeholders ────────────────────────────────
+
+def test_19_builder_visual_is_not_flagged_but_a_true_placeholder_still_is(tmp_deck):
+    import scripts.review_deck as review
+
+    builder_deck = tmp_deck(BUILDER_VISUAL_DECK)
+    builder_findings, _, _ = review.check_model(builder_deck)
+    builder_warnings = {f.beat_id for f in builder_findings if f.level == "warn"}
+    assert "has-code" not in builder_warnings, builder_findings
+
+    empty_deck = tmp_deck(EMPTY_DECK)
+    empty_findings, _, _ = review.check_model(empty_deck)
+    empty_warnings = {f.beat_id: f.message for f in empty_findings if f.level == "warn"}
+    assert "unsourced-photo" in empty_warnings
+    assert "placeholder" in empty_warnings["unsourced-photo"]
+
+
+# ── 20. activity-setup example block ────────────────────────────────────────
+
+def test_20_activity_setup_example_is_left_aligned_but_centred_as_a_block():
+    layout = get_layout("activity-setup")
+    built = layout.build(Content(
+        task="Do the thing",
+        example='escolas = pd.read_csv("data/escolas.csv")\nx = 1',
+    ))
+    example_step = next(s for s in built.steps
+                        if s.elements and s.elements[0].slot == "example")
+    box, label = example_step.elements[0].mobject
+    lefts = [line.get_left()[0] for line in label]
+    assert len(lefts) > 1
+    assert max(lefts) - min(lefts) < 1e-6, lefts
+    # The lines are left-aligned, but the block itself still sits centred.
+    assert abs(label.get_center()[0] - box.get_center()[0]) < 1e-6
+
+
 # ── fixtures ─────────────────────────────────────────────────────────────────
 
 EMPTY_DECK = """---
@@ -559,6 +594,34 @@ visual:
 ```
 
 **Claim.** The gap widens with optimisation pressure.
+"""
+
+BUILDER_VISUAL_DECK = """---
+slug: builder-visual
+title: A builder draws real content
+target: manim
+---
+
+# Section 1 — Only section
+
+> **Bridge.** Opening frame.
+
+## 1.1 — Real code, not a placeholder
+
+```yaml
+id: has-code
+layout: claim-above-figure
+time_s: 60
+visual:
+  kind: constructible
+  sub: geometry
+  intent: the read_csv call, verbatim from assets/verified_snippets.py
+  builder: scenes.code_block:code
+  args:
+    code: "x = 1"
+```
+
+**Claim.** The builder draws real content.
 """
 
 TIME_DECK = """---

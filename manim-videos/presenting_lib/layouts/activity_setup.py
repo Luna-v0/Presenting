@@ -35,8 +35,10 @@ class ActivitySetup(Layout):
 
         if content.example:
             slot = self.slots["example"]
+            # Lines are left-aligned (code reads left-aligned); the block as a
+            # whole is still centred in the slot via the `label.move_to` below.
             label = slot.inset(0.5, 0.35).fit_text(
-                content.example, style="body", on=STRUCTURE, align="center",
+                content.example, style="body", on=STRUCTURE, align="left",
                 family=TYPE.family_mono, layout=self.name, target=target)
             box = RoundedRectangle(
                 width=min(label.width + 1.0, slot.w),

@@ -126,7 +126,7 @@ def check_model(deck: Deck) -> tuple[list[C.Finding], dict[str, int], dict]:
 
         spec = beat.visual or {}
         if spec.get("kind", "none") not in ("none", "") and not spec.get("graph") \
-                and not spec.get("data"):
+                and not spec.get("data") and not spec.get("builder"):
             from presenting_lib.placeholders import VisualSpec
 
             probe = VisualSpec(kind=spec["kind"], sub=spec.get("sub", ""),

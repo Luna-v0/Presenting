@@ -19,3 +19,4 @@ __pycache__/
 manim-videos/decks/*/out/*.html
 manim-videos/decks/*/out/*.pptx
 manim-videos/decks/*/assets/built/
+manim-videos/decks/*/gallery/images/
