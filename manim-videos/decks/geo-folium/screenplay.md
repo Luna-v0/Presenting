@@ -257,15 +257,15 @@ time_s: 900
 transition: cut
 content:
   instructions: >
-    Open geo_folium_exercises.ipynb, Part 1. Load escolas.csv, keep only the
+    Open geo_folium.ipynb, Part 1. Load escolas.csv, keep only the
     crèches, count schools per type and per CRE, then merge cre.csv in and
     compute schools per km². Which CRE is the densest, and which school drops
     out of the merge?
   constraints:
     - 15 minutes
     - pairs welcome
-    - solutions follow
-generated_hash: 56c30eec26e85ba7
+    - solutions hidden under each exercise
+generated_hash: f23d0d5b0fc4a47a
 ```
 
 **Claim.** Fifteen minutes on pandas alone, so the geo blocks start from code that just ran.
@@ -447,8 +447,8 @@ content:
   constraints:
     - 20 minutes
     - pairs welcome
-    - solutions follow
-generated_hash: 612bbe99e19b8346
+    - solutions hidden under each exercise
+generated_hash: e73b580886642b8b
 ```
 
 **Claim.** Twenty minutes to get from a CSV to a first map with their own hands.
@@ -666,8 +666,8 @@ content:
   constraints:
     - 20 minutes
     - pairs welcome
-    - solutions follow
-generated_hash: a85acd2eeb6ab9eb
+    - solutions hidden under each exercise
+generated_hash: ce2a6c35f200fa1c
 ```
 
 **Claim.** Twenty minutes on the one genuinely new operation of the class.

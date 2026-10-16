@@ -466,7 +466,7 @@ time_s: 1800
 transition: cut
 content:
   instructions: >
-    Open datavis_exercises.ipynb, Part 1. Three charts each break at least two
+    Open datavis_2.ipynb, Part 1. Three charts each break at least two
     of the eight habits. For each one, write down what is wrong, then redraw
     it: the right chart for the question, sorted, labelled axes, a title that
     states the finding and no extra ink. Stretch: annotate the one point the
@@ -474,8 +474,8 @@ content:
   constraints:
     - 30 minutes
     - pairs welcome
-    - solutions follow
-generated_hash: 5e163bc29886f23d
+    - solutions hidden under each exercise
+generated_hash: 8c32e5999da4ca94
 ```
 
 **Claim.** Thirty minutes of redrawing, so the habits have been typed once before the toolbox adds more charts.
@@ -984,8 +984,8 @@ content:
   constraints:
     - 40 minutes
     - pairs welcome
-    - solutions follow
-generated_hash: 0d1324ef75c13e2e
+    - solutions hidden under each exercise
+generated_hash: 34f8f4ddb375affc
 ```
 
 **Claim.** Forty minutes where the choice of chart is theirs, and the debrief compares the choices.

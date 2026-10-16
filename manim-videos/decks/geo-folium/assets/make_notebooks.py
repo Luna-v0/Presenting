@@ -1,19 +1,20 @@
-"""Build the class's companion notebooks from the verified slide code.
+"""Build the class's one companion notebook from the verified slide code.
 
     uv run --no-project --with nbformat python make_notebooks.py [OUT_DIR]
 
 OUT_DIR defaults to Data_Science_be_like's notebooks folder next to this repo
-(/mnt/hd/Repos/ds_be_like/code/notebooks). Writes two notebooks with one part
-per activity block of the screenplay, in its order and wording:
+(/mnt/hd/Repos/ds_be_like/code/notebooks). Writes one notebook, geo_folium.ipynb,
+with one part per activity block of the screenplay, in its order and wording.
 
-    geo_folium_exercises.ipynb   TODO cells hold `____` placeholders, which
-                                 raise NameError, so a top-to-bottom run stops
-                                 at the first TODO and nowhere else
-    geo_folium_solutions.ipynb   the same notebook with every TODO filled in
+Every exercise cell is a comment-only skeleton, so it never errors when run.
+The cell right after it holds the real solution, collapsed in both Colab (its
+first line is `# @title Solution { display-mode: "form" }`) and JupyterLab
+(its metadata has `"jupyter": {"source_hidden": true}`), so "Run all" plays
+top to bottom while the solutions stay out of sight.
 
 Every solution that is also slide code is taken verbatim from the matching
 `# %% <beat-id>` cell of verified_snippets.py, so the notebook and the slides
-cannot drift apart. Both notebooks are written without outputs.
+cannot drift apart. The notebook is written without outputs.
 """
 
 from __future__ import annotations
@@ -54,11 +55,19 @@ def v(*ids: str) -> str:
     return "\n".join(V[i] for i in ids)
 
 
+def as_comment(text: str) -> str:
+    """Every line of text, commented out, so it is safe inside a code cell."""
+    return "\n".join("# " + line if line.strip() else "#" for line in text.split("\n"))
+
+
 # ── the notebook, as (kind, ...) entries ────────────────────────────────────
-#   ("md", text)                      markdown in both notebooks
-#   ("md2", exercises, solutions)     markdown that differs
-#   ("code", source)                  given code, in both notebooks
-#   ("todo", label, stub, solution)   a TODO: stub in exercises, code in solutions
+#   ("md", text)                      a markdown cell
+#   ("md2", question, answer)         a visible question, then a hidden answer
+#                                      (the answer is prose, so it is commented
+#                                      out rather than run as code)
+#   ("code", source)                  a given, runnable code cell
+#   ("todo", label, stub, solution)   a visible comment-only skeleton, then the
+#                                      hidden solution that actually runs
 
 INTRO = """\
 Companion notebook to the class **Points on a map**: GeoPandas and folium on
@@ -177,12 +186,10 @@ else:
         print("copied them from", FALLBACK)'''
 
 NOTEBOOK = [
-    ("md2", "# Points on a map: GeoPandas and folium (exercises)\n\n" + INTRO
-     + "\n\nCells marked **TODO** are yours: replace every `____` with code. "
-       "`geo_folium_solutions.ipynb` has every TODO filled in.",
-     "# Points on a map: GeoPandas and folium (solutions)\n\n" + INTRO
-     + "\n\nThis is the solution notebook: every TODO of "
-       "`geo_folium_exercises.ipynb` is filled in."),
+    ("md", "# Points on a map: GeoPandas and folium\n\n" + INTRO
+     + "\n\nCells marked **TODO** are yours: write your code where the cell "
+       "says `# your code here`. Solutions hidden under each exercise, as the "
+       "cell right after it; run all and it defines what later cells need."),
     ("md", "## Setup"),
     ("code", V["imports"]),
     ("code", DATA_CELL),
@@ -406,26 +413,31 @@ NOTEBOOK = [
 ]
 
 
-def build(solutions: bool) -> nbformat.NotebookNode:
+SOLUTION_TITLE = '# @title Solution { display-mode: "form" }\n'
+HIDDEN = {"jupyter": {"source_hidden": True}}
+
+
+def build() -> nbformat.NotebookNode:
     cells = []
     for entry in NOTEBOOK:
         kind = entry[0]
         if kind == "md":
             cells.append(new_markdown_cell(entry[1]))
         elif kind == "md2":
-            cells.append(new_markdown_cell(entry[2] if solutions else entry[1]))
+            _, question, answer = entry
+            cells.append(new_markdown_cell(question))
+            cells.append(new_code_cell(SOLUTION_TITLE + as_comment(answer),
+                                       metadata={"tags": ["solution"], **HIDDEN}))
         elif kind == "code":
             cells.append(new_code_cell(entry[1]))
         elif kind == "todo":
             _, label, stub, solution = entry
-            title = label.split(" ", 1)
-            if solutions:
-                cells.append(new_markdown_cell(f"**{title[0]}** {title[1]}"))
-                cells.append(new_code_cell(solution, metadata={"tags": ["solution"]}))
-            else:
-                cells.append(new_markdown_cell(f"**TODO {title[0]}** {title[1]}"))
-                cells.append(new_code_cell(f"# TODO {title[0]}: replace every ____\n{stub}",
-                                           metadata={"tags": ["todo"]}))
+            num, text = label.split(" ", 1)
+            cells.append(new_markdown_cell(f"**TODO {num}** {text}"))
+            cells.append(new_code_cell(as_comment(stub) + "\n# your code here",
+                                       metadata={"tags": ["todo"]}))
+            cells.append(new_code_cell(SOLUTION_TITLE + solution,
+                                       metadata={"tags": ["solution"], **HIDDEN}))
     nb = new_notebook(cells=cells)
     nb.metadata = {
         "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
@@ -437,12 +449,10 @@ def build(solutions: bool) -> nbformat.NotebookNode:
 def main() -> None:
     out = Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT
     out.mkdir(parents=True, exist_ok=True)
-    for name, solutions in (("geo_folium_exercises.ipynb", False),
-                            ("geo_folium_solutions.ipynb", True)):
-        nb = build(solutions)
-        nbformat.validate(nb)
-        nbformat.write(nb, out / name)
-        print(out / name, len(nb.cells), "cells")
+    nb = build()
+    nbformat.validate(nb)
+    nbformat.write(nb, out / "geo_folium.ipynb")
+    print(out / "geo_folium.ipynb", len(nb.cells), "cells")
 
 
 if __name__ == "__main__":
